@@ -1,10 +1,12 @@
 package cs455.overlay.node;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.Socket;
 
 import cs455.overlay.transport.*;
 import cs455.overlay.wireformats.Event;
+import cs455.overlay.wireformats.RegisterRequest;
 import cs455.overlay.transport.TCPServerThread;
 
 public class MessagingNode implements Node {
@@ -40,15 +42,26 @@ public class MessagingNode implements Node {
 		int registryPortNum = Integer.parseInt(args[1]);
 		//start a server for every messaging node to listen for requests
 		new TCPServerThread().start();
+		System.out.println("Message made server");
 		
 		try(	//try to connect to registry
+				
 				Socket socket = new Socket(registryHostName, registryPortNum);
+
 				
 				)						
 				{
+			System.out.println("got Socket");
+			TCPSender sender = new TCPSender(socket);
+			System.out.println("port num "+socket.getLocalPort());
+			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), "Tester");
+			sender.sendData(regReq.getByte());
+			System.out.println("Message: "+new String(regReq.getByte()));
+			System.out.println("Request Sent");
 			
 			
 		}catch(IOException e){
+			System.out.println("IOExecption Message Node");
 					System.out.println(e);
 		}
 	}

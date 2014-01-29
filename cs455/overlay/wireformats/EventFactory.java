@@ -24,24 +24,23 @@ public class EventFactory {
 				new DataInputStream(new BufferedInputStream(baInputStream));
 		
 		int type = din.readInt();
+		baInputStream.close();
+		din.close();
 		switch(type){
 		//ctors w/ byte[]
 		case Protocol.DEREGISTER:
-			int IPAddressLength = din.readInt();
-			byte[] IPAddressBytes = new byte[IPAddressLength];
-			din.readFully(IPAddressBytes);
-			String IPAddress = new String(IPAddressBytes);
-			
-			int nodePortNum = din.readInt();
-			retEvent=new Deregister(IPAddress,nodePortNum);
+			retEvent=new Deregister(marshalledBytes);
 			break;
 		case Protocol.LINK_WEIGHTS:
+			//retEvent = new LinkWeights(marshalledBytes);
 			break;
 		case Protocol.MESSAGE:
+			//retEvent = new Message(marshalledBytes);
 			break;
 		case Protocol.MESSAGING_NODES_LIST:
 			break;
 		case Protocol.REGISTER_REQUEST:
+			retEvent = new RegisterRequest(marshalledBytes);
 			break;
 		case Protocol.REGISTER_RESPONSE:
 			break;

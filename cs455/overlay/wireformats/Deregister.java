@@ -1,7 +1,10 @@
 package cs455.overlay.wireformats;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
@@ -16,8 +19,30 @@ public class Deregister implements Event {
 		nodeIPAddress = nodeIPAddressArg;
 		nodePortNum = nodePortNumArg;
 	}
+	
+	public Deregister(byte[] marshalledBytes) throws IOException{
+		ByteArrayInputStream baInStr = 
+				new ByteArrayInputStream(marshalledBytes);
+		DataInputStream din = 
+				new DataInputStream(new BufferedInputStream(baInStr));
+		int msgType = din.readInt();
+		if(msgType != type){
+			System.out.println("ERROR: types do not match. Actual type: "+type+", passed type: "+msgType);
+		}
+		int IPAddressLength = din.readInt();
+		byte [] IPAddBytes = new byte[IPAddressLength];
+		din.readFully(IPAddBytes);
+		this.nodeIPAddress = new String(IPAddBytes);
+		
+		nodePortNum = din.readInt();
+		
+		baInStr.close();
+		din.close();
+		
+	}
 	@Override
 	public int getType() {
+		return type;
 		// TODO Auto-generated method stub
 
 	}
