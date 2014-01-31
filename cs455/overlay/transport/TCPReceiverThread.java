@@ -12,19 +12,19 @@ import cs455.overlay.wireformats.EventFactory;
 
 public class TCPReceiverThread extends Thread{
 	//to have a way to get the event from the receiver thread
-	private ResultSetter setter;
+	//private ResultSetter setter;
 	private Socket socket;
 	private DataInputStream din;
-	//private Node threadsNode;
+	private Node myNode;
 	
 	public void setResultSetter(ResultSetter setter){
-		this.setter = setter;
+		//this.setter = setter;
 	}
 	
-	public TCPReceiverThread(Socket socket) throws IOException{
+	public TCPReceiverThread(Node node, Socket socket) throws IOException{
 		this.socket = socket;
 		din = new DataInputStream(socket.getInputStream());
-		//this.threadsNode = node;
+		this.myNode = node;
 	}
 	
 	public void run(){
@@ -41,12 +41,13 @@ public class TCPReceiverThread extends Thread{
 				System.out.println("2");
 				System.out.println(dataLength);
 				System.out.println(new String(data));
-				if(dataLength>1){
+				//if(dataLength>1){
 					System.out.println("2.5");
 					Event event = EventFactory.getEvent(data);
 					System.out.println("3");
-					setter.addResult(event);
-				}
+					myNode.onEvent(event);
+					//setter.addResult(event);
+				//}
 				
 			} catch (SocketException se){
 				System.out.println("Socket Exception");
@@ -59,7 +60,8 @@ public class TCPReceiverThread extends Thread{
 			}
 		}
 		System.out.println("here");
-		System.out.println("Socket!=null: "+socket!=null);
+		System.out.println("Socket!=null: ");
+		System.out.println(socket!=null);
 	}
 
 }

@@ -29,6 +29,16 @@ public class MessagingNode implements Node {
 		return portNum;
 	}
 	
+	public MessagingNode(){
+		
+		numMessagesSent = 0;
+		sumMessagesSent =0;
+		numMessagesRecieved =0;
+		sumMessagesRecieved = 0;
+		numMessagesRelayed =0;
+		
+		new TCPServerThread(this).start();
+	}
 	
 	public static void main(String[] args) throws IOException{
 		if(args.length != 2){
@@ -38,13 +48,40 @@ public class MessagingNode implements Node {
 			System.exit(1);
 		}
 		
+		MessagingNode msgNode = new MessagingNode();
+		
 		String registryHostName = args[0];
 		int registryPortNum = Integer.parseInt(args[1]);
 		//start a server for every messaging node to listen for requests
-		new TCPServerThread().start();
-		System.out.println("Message made server");
+		//new TCPServerThread().start();
+		//System.out.println("Message made server");
 		
+		msgNode.attemptRegistration(registryHostName, registryPortNum);
+		/*
 		try(	//try to connect to registry
+				
+				Socket socket = new Socket(registryHostName, registryPortNum);
+
+				
+				)						
+				{
+			System.out.println("got Socket");
+			TCPSender sender = new TCPSender(socket);
+			System.out.println("port num "+socket.getLocalPort());
+			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), "Tester");
+			sender.sendData(regReq.getByte());
+			System.out.println("Message: "+new String(regReq.getByte()));
+			System.out.println("Request Sent");
+			
+			
+		}catch(IOException e){
+			System.out.println("IOExecption Message Node");
+					System.out.println(e);
+		}*/
+	}
+	
+	private void attemptRegistration(String registryHostName, int registryPortNum){
+try(	//try to connect to registry
 				
 				Socket socket = new Socket(registryHostName, registryPortNum);
 
@@ -65,15 +102,7 @@ public class MessagingNode implements Node {
 					System.out.println(e);
 		}
 	}
-	
-	public MessagingNode(){
-		numMessagesSent = 0;
-		sumMessagesSent =0;
-		numMessagesRecieved =0;
-		sumMessagesRecieved = 0;
-		numMessagesRelayed =0;
-		
-	}
+
 	@Override
 	public void onEvent(Event event) {
 		// TODO Auto-generated method stub

@@ -17,6 +17,7 @@ public class RegisterRequest implements Event {
 	public RegisterRequest(String IPAddArg, int portNumArg, String idArg){
 		IPAddress = IPAddArg;
 		PortNum = portNumArg;
+		System.out.println("Port Num " + PortNum);
 		AssignedID = idArg;
 	}
 	
@@ -43,21 +44,27 @@ public class RegisterRequest implements Event {
 				new ByteArrayInputStream(marshalledBytes);
 		DataInputStream din = 
 				new DataInputStream(new BufferedInputStream(baInStr));
+		
+		//type
 		int msgType = din.readInt();
 		if(msgType != type){
 			System.out.println("ERROR: types do not match. Actual type: "+type+", passed type: "+msgType);
 		}
+		
+		//IPAddress
 		int IPAddressLength = din.readInt();
 		byte [] IPAddBytes = new byte[IPAddressLength];
 		din.readFully(IPAddBytes);
 		this.IPAddress = new String(IPAddBytes);
-		
+	
+		//port number
 		PortNum = din.readInt();
 		
+		//ID
 		int IDLength = din.readInt();
 		byte [] IDBytes = new byte[IDLength];
 		din.readFully(IDBytes);
-		this.AssignedID = new String(IDBytes);
+		this.AssignedID = new String(IDBytes);		
 		
 		baInStr.close();
 		din.close();
@@ -68,18 +75,23 @@ public class RegisterRequest implements Event {
 		byte[] marshalledBytes=null;
 		ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
 		DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
+		//type
 		dout.writeInt(type);
 		
+		//IPAddress
 		byte[] IPBytes = IPAddress.getBytes();
 		int elementLength = IPBytes.length;
 		dout.writeInt(elementLength);
 		dout.write(IPBytes);
 		
+		//Port Number
 		dout.writeInt(PortNum);
 		
+		//ID
 		byte[] IDBytes = AssignedID.getBytes();
 		elementLength = IDBytes.length;
-		dout.write(elementLength);
+		System.out.println("IdBytes length "+elementLength);
+		dout.writeInt(elementLength);
 		dout.write(IDBytes);
 		
 		dout.flush();

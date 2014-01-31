@@ -22,10 +22,13 @@ public class EventFactory {
 				new ByteArrayInputStream(marshalledBytes);
 		DataInputStream din = 
 				new DataInputStream(new BufferedInputStream(baInputStream));
-		
+		System.out.println("EventFact 1");
 		int type = din.readInt();
+		System.out.println("Type: "+type);
 		baInputStream.close();
+		System.out.println("EventFact 2");
 		din.close();
+		System.out.println("EventFact 3");
 		switch(type){
 		//ctors w/ byte[]
 		case Protocol.DEREGISTER:
@@ -40,6 +43,7 @@ public class EventFactory {
 		case Protocol.MESSAGING_NODES_LIST:
 			break;
 		case Protocol.REGISTER_REQUEST:
+			System.out.println("EventFact 5");
 			retEvent = new RegisterRequest(marshalledBytes);
 			break;
 		case Protocol.REGISTER_RESPONSE:
@@ -52,6 +56,10 @@ public class EventFactory {
 			break;
 		case Protocol.TASK_SUMMARY_RESPONSE:
 			break;
+		default:
+			System.out.println("Unknown type: "+type);
+			break;
+				
 		}
 		return retEvent;
 	}

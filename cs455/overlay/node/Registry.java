@@ -19,6 +19,11 @@ public class Registry implements Node {
 	//to recieve events from reciving threads (aka from server thread)
 	//private ArrayList<Event> receivedEvents = new ArrayList<Event>();
 	
+	public Registry(){
+		new TCPServerThread(this).start();
+		
+	}
+	
 	public static void main(String [] args) throws IOException{
 		if(args.length != 1){
 			System.err.println("Usage: java cs455.overlay.node.Registry <port number>");
@@ -26,28 +31,28 @@ public class Registry implements Node {
 		}
 		
 		Registry reg = new Registry();
-		System.out.println("HostName: "+InetAddress.getLocalHost().getHostName());
+		//System.out.println("HostName: "+InetAddress.getLocalHost().getHostName());
 		
 		//to recieve events from reciving threads (aka from server thread)
-		final ArrayList<Event> receivedEvents = new ArrayList<Event>();
+		//final ArrayList<Event> receivedEvents = new ArrayList<Event>();
 		
 		
-		ResultSetter serverSetter = new ResultSetter(){
-			public void addResult(Event result){
-				receivedEvents.add(result);
-			}
-		};
+		//ResultSetter serverSetter = new ResultSetter(){
+			//public void addResult(Event result){
+				//receivedEvents.add(result);
+			//}
+		//};
 		
-		TCPServerThread server = new TCPServerThread();
-		server.setResultSetter(serverSetter);
-		server.start();
+		//TCPServerThread server = new TCPServerThread();
+		//server.setResultSetter(serverSetter);
+		//server.start();
 		
-		while(true){
+/*		while(true){
 			if(!receivedEvents.isEmpty()){
 				reg.onEvent(receivedEvents.remove(0));
 			}
 		}
-		/* moved to server thread
+	*/	/* moved to server thread
 		try(
 				ServerSocket serverSocket = new ServerSocket(0);)
 				{
@@ -69,9 +74,7 @@ public class Registry implements Node {
 	}
 
 
-	public Registry(){
-		
-	}
+
 	@Override
 	public void onEvent(Event event) {
 		switch(event.getType()){
