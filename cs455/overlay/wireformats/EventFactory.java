@@ -22,13 +22,9 @@ public class EventFactory {
 				new ByteArrayInputStream(marshalledBytes);
 		DataInputStream din = 
 				new DataInputStream(new BufferedInputStream(baInputStream));
-		System.out.println("EventFact 1");
 		int type = din.readInt();
-		System.out.println("Type: "+type);
 		baInputStream.close();
-		System.out.println("EventFact 2");
 		din.close();
-		System.out.println("EventFact 3");
 		switch(type){
 		//ctors w/ byte[]
 		case Protocol.DEREGISTER:
@@ -47,6 +43,7 @@ public class EventFactory {
 			retEvent = new RegisterRequest(marshalledBytes);
 			break;
 		case Protocol.REGISTER_RESPONSE:
+			retEvent = new RegisterResponse(marshalledBytes);
 			break;
 		case Protocol.TASK_COMPLETE:
 			break;

@@ -20,6 +20,10 @@ public class RegisterResponse implements Event {
 		// TODO Auto-generated method stub
 
 	}
+	
+	public String getAdditionalInfo(){
+		return additionalInfo;
+	}
 
 	public RegisterResponse(byte statusArg, String infoArg){
 		statusCode = statusArg;

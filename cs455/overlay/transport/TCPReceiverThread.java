@@ -22,12 +22,14 @@ public class TCPReceiverThread extends Thread{
 	}
 	
 	public TCPReceiverThread(Node node, Socket socket) throws IOException{
+		System.out.println("Reciever thread made");
 		this.socket = socket;
 		din = new DataInputStream(socket.getInputStream());
 		this.myNode = node;
 	}
 	
 	public void run(){
+		System.out.println("Thread running");
 		int dataLength;
 		while(socket != null){
 			try{
@@ -39,13 +41,11 @@ public class TCPReceiverThread extends Thread{
 				System.out.println("1");
 				din.readFully(data, 0, dataLength);
 				System.out.println("2");
-				System.out.println(dataLength);
-				System.out.println(new String(data));
 				//if(dataLength>1){
 					System.out.println("2.5");
 					Event event = EventFactory.getEvent(data);
 					System.out.println("3");
-					myNode.onEvent(event);
+					myNode.onEvent(event, socket);
 					//setter.addResult(event);
 				//}
 				
