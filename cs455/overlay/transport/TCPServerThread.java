@@ -12,18 +12,21 @@ import cs455.overlay.wireformats.Event;
 
 public class TCPServerThread extends Thread{
 	private Node myNode;
-	int serverSocketPortNum;
+	private int serverSocketPortNum;
+	private ArrayList<Socket> sockets;
 	
 	//for setting the registry port num
 	public TCPServerThread(Node node, int portNumArg){
 		myNode=node;
 		serverSocketPortNum = portNumArg;
+		sockets = new ArrayList<Socket>();
 	}
 	
 	//for setting other port nums, they will be picked automatically
 	public TCPServerThread(Node node){
 		myNode=node;
 		serverSocketPortNum = 0;
+		sockets = new ArrayList<Socket>();
 	}
 	
 	public TCPServerThread(){
@@ -36,13 +39,17 @@ public class TCPServerThread extends Thread{
 				ServerSocket serverSocket = new ServerSocket(this.serverSocketPortNum);)
 				{
 				while(true){
-					new TCPReceiverThread(myNode, serverSocket.accept()).start();
+					Socket socket = serverSocket.accept();
+					sockets.add(socket);
+					new TCPReceiverThread(myNode,socket).start();
+					System.out.println("\n Number of sockets: "+sockets.size());
 				}
 		} catch (IOException e){
 			System.out.println("Exception caught when trying to listen on port or"
 					+ "listening for a connection");
 			System.out.println(e.getMessage());
 		}
+		System.out.println("server thread existed");
 	}
 	
 }

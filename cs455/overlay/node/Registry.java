@@ -70,6 +70,7 @@ public class Registry implements Node {
 		byte success = 1;
 		String message="";
 		nodeInformation newNodeInfo = new nodeInformation(regReq.getIPAddress(), regReq.getPortNum());
+		newNodeInfo.print();
 		for(nodeInformation n: registeredNodes){
 			if(n.equals(newNodeInfo)){
 				success = 0;
@@ -79,16 +80,18 @@ public class Registry implements Node {
 			}
 		}
 		if(success==1){
+			registeredNodes.add(newNodeInfo);
 			message = "Registration Requestion successful. The number of messaging nodes currently "
 					+ "in the overlay is ("+registeredNodes.size()+")";
-			registeredNodes.add(newNodeInfo);
 			
 		}
 		
-		System.out.println("Sent response");
+		System.out.println("Response Message: "+message);
 		TCPSender sender = new TCPSender(socket);
 		System.out.println(socket.getLocalPort());
 		sender.sendData(new RegisterResponse(success, message).getByte());
+		System.out.println("Sent response");
+
 		
 		return success;
 	}

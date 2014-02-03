@@ -1,6 +1,7 @@
 package cs455.overlay.transport;
 
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
@@ -31,7 +32,9 @@ public class TCPReceiverThread extends Thread{
 	public void run(){
 		System.out.println("Thread running");
 		int dataLength;
+		boolean EOFExcept = false;
 		while(socket != null){
+			//dataLength = din.readInt();
 			try{
 				System.out.println("listening");
 				dataLength = din.readInt();
@@ -49,13 +52,21 @@ public class TCPReceiverThread extends Thread{
 					//setter.addResult(event);
 				//}
 				
-			} catch (SocketException se){
+			}catch(EOFException eof){
+				System.out.println("EOF Exception");
+				System.out.println(eof.getMessage());
+				break;
+			}
+			catch (SocketException se){
 				System.out.println("Socket Exception");
 				System.out.println(se.getMessage());
 				break;
 			} catch (IOException ioe){
 				System.out.println("IOException.");
-				System.out.println(ioe.getMessage());
+				System.out.println("Message: "+ ioe.getMessage());
+				System.out.println(ioe.getCause());
+				ioe.printStackTrace();
+				
 				break;
 			}
 		}

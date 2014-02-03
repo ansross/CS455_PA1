@@ -15,7 +15,12 @@ public class nodeInformation {
 	}
 	
 	public boolean equals(MessagingNode rhs){
-		return this.IPAddress.equals(rhs.getIPAddress()) && this.portNum==rhs.getPortNum();
+		return (this.IPAddress.equals(rhs.getIPAddress()) && this.portNum==rhs.getPortNum());
+	}
+	
+	public void print(){
+		System.out.println("IPAddress: "+IPAddress +"\tportNum: "+portNum);
 	}
 
+	
 }
