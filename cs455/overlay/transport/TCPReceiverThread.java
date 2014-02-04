@@ -55,6 +55,7 @@ public class TCPReceiverThread extends Thread{
 			}catch(EOFException eof){
 				System.out.println("EOF Exception");
 				System.out.println(eof.getMessage());
+				eof.printStackTrace();
 				break;
 			}
 			catch (SocketException se){

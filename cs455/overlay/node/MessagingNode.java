@@ -59,6 +59,7 @@ public class MessagingNode implements Node {
 		int registryPortNum = Integer.parseInt(args[1]);
 		
 		msgNode.attemptRegistration(registryHostName, registryPortNum);
+		while(true){}
 	}
 	
 	private void attemptRegistration(String registryHostName, int registryPortNum){
@@ -69,13 +70,17 @@ public class MessagingNode implements Node {
 				
 				)						
 				{
-			new TCPReceiverThread(this, socket).start();
+			new Connection(this, socket);
+			//new TCPReceiverThread(this, socket).start();
 			System.out.println("got Socket");
-			TCPSender sender = new TCPSender(socket);
+			//TCPSender sender = establishedConnections.get("fish").getSender();//new TCPSender(socket);
 			System.out.println("port num "+socket.getLocalPort());
 			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), "Tester");
-			sender.sendData(regReq.getByte());
+			establishedConnections.get("fish").getSender().sendData(regReq.getByte());
+			//DELETE ME
+			establishedConnections.get("fish").getSender().sendData(regReq.getByte());
 			System.out.println("Request Sent");
+			while(true){}
 			
 			
 		}catch(IOException e){

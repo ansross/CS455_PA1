@@ -12,6 +12,7 @@ public class Connection {
 	private TCPSender sender;
 	
 	public Connection(Node node, Socket socket) throws IOException{
+		
 		this.name = "fish";//Utilities.createKeyFromSocket(socket);
 		this.node = node;
 		this.receiver = new TCPReceiverThread(node, socket);
@@ -19,6 +20,10 @@ public class Connection {
 		sender = new TCPSender(socket);
 		node.registerConnection(this);
 		
+	}
+	
+	public TCPSender getSender(){
+		return sender;
 	}
 	
 	public String getName(){

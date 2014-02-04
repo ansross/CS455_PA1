@@ -25,7 +25,7 @@ public class Registry implements Node {
 	public Registry(){
 		establishedConnections = new Hashtable<String, Connection>();
 		registeredNodes = new ArrayList<nodeInformation>();
-		new TCPServerThread(this, 15004).start();
+		new TCPServerThread(this, 15005).start();
 		
 	}
 	
@@ -49,6 +49,7 @@ public class Registry implements Node {
 		case Protocol.REGISTER_REQUEST:
 			System.out.println("Recieved request");
 			try {
+				
 				byte registrationSuccess = attemptRegistration((RegisterRequest)event, socket);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -89,7 +90,7 @@ public class Registry implements Node {
 		}
 		
 		System.out.println("Response Message: "+message);
-		TCPSender sender = new TCPSender(socket);
+		TCPSender sender = establishedConnections.get("fish").getSender();
 		System.out.println(socket.getLocalPort());
 		sender.sendData(new RegisterResponse(success, message).getByte());
 		System.out.println("Sent response");
