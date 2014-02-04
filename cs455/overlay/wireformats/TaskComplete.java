@@ -1,19 +1,51 @@
 package cs455.overlay.wireformats;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TaskComplete implements Event {
-	private int type;
+	private int type = Protocol.TASK_COMPLETE;
 	private String nodeIPAddress;
-	private long nodePortNum;
+	private int nodePortNum;
 	
 	@Override
 	public int getType() {
+		return type;
 		// TODO Auto-generated method stub
 
+	}
+	
+	public TaskComplete(String IPAddresArg, int portNumArg){
+		this.nodeIPAddress=IPAddresArg;
+		this.nodePortNum = portNumArg;
+	}
+	
+	public TaskComplete(byte[] marshalledBytes) throws IOException{
+		ByteArrayInputStream baInStr = 
+				new ByteArrayInputStream(marshalledBytes);
+		DataInputStream din = 
+				new DataInputStream(new BufferedInputStream(baInStr));
+		
+		//type
+		int msgType = din.readInt();
+		if(msgType != type){
+			System.out.println("ERROR: types do not match. Actual type: "+type+", passed type: "+msgType);
+		}
+		
+		int IPLength = din.readInt();
+		byte [] IPBytes = new byte[IPLength];
+		din.readFully(IPBytes);
+		this.nodeIPAddress = new String(IPBytes);
+	
+		this.nodePortNum = din.readInt();
+		
+		baInStr.close();
+		din.close();
 	}
 
 	@Override

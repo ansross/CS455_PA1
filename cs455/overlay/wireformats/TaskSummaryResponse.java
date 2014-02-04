@@ -1,12 +1,15 @@
 package cs455.overlay.wireformats;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TaskSummaryResponse implements Event {
-	private int type;
+	private int type=Protocol.TASK_SUMMARY_RESPONSE;
 	private String nodeIPAddress;
 	private int nodePortNum;
 	private int numSent;
@@ -17,8 +20,37 @@ public class TaskSummaryResponse implements Event {
 	
 	@Override
 	public int getType() {
+		return type;
 		// TODO Auto-generated method stub
 
+	}
+	
+	public TaskSummaryResponse(byte[] marshalledBytes) throws IOException{
+		ByteArrayInputStream baInStr = 
+				new ByteArrayInputStream(marshalledBytes);
+		DataInputStream din = 
+				new DataInputStream(new BufferedInputStream(baInStr));
+		
+		//type
+		int msgType = din.readInt();
+		if(msgType != type){
+			System.out.println("ERROR: types do not match. Actual type: "+type+", passed type: "+msgType);
+		}
+		
+		int IPLength = din.readInt();
+		byte [] IPBytes = new byte[IPLength];
+		din.readFully(IPBytes);
+		this.nodeIPAddress = new String(IPBytes);
+		
+		this.nodePortNum = din.readInt();
+		this.numSent=din.readInt();
+		this.sumSent=din.readLong();
+		this.numReceived = din.readInt();
+		this.sumReceived=din.readLong();
+		this.numRelayed=din.readInt();
+	
+		baInStr.close();
+		din.close();
 	}
 
 	@Override

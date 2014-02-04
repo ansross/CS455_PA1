@@ -40,8 +40,9 @@ public class TCPServerThread extends Thread{
 				{
 				while(true){
 					Socket socket = serverSocket.accept();
+					new Connection(myNode, socket);
 					sockets.add(socket);
-					new TCPReceiverThread(myNode,socket).start();
+					//new TCPReceiverThread(myNode,socket).start();
 					System.out.println("\n Number of sockets: "+sockets.size());
 				}
 		} catch (IOException e){

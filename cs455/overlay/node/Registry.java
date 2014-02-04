@@ -5,24 +5,26 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import util.ResultSetter;
+import cs455.overlay.transport.Connection;
 import cs455.overlay.transport.TCPSender;
 import cs455.overlay.transport.TCPServerThread;
 import cs455.overlay.wireformats.*;
-import cs455.overlay.wireformats.Event;
-import cs455.overlay.wireformats.Protocol;
-import cs455.overlay.wireformats.RegisterRequest;
 
 public class Registry implements Node {
 	//registry sends: link_weights, messaging_nodes_list, register_response, task_initiate, task_summary_request
 	//registry recieves: deregister_request, register_response, task_complete, task_summary_response
-	private ArrayList<nodeInformation> registeredNodes = new ArrayList<nodeInformation>();
+	private ArrayList<nodeInformation> registeredNodes;// = new ArrayList<nodeInformation>();
 	
+	private Hashtable<String, Connection> establishedConnections;// = new Hashtable<String, Connection>();
 	//to recieve events from reciving threads (aka from server thread)
 	//private ArrayList<Event> receivedEvents = new ArrayList<Event>();
 	
 	public Registry(){
+		establishedConnections = new Hashtable<String, Connection>();
+		registeredNodes = new ArrayList<nodeInformation>();
 		new TCPServerThread(this, 15004).start();
 		
 	}
@@ -94,6 +96,19 @@ public class Registry implements Node {
 
 		
 		return success;
+	}
+
+	@Override
+	public void registerConnection(Connection connection){
+		establishedConnections.put(connection.getName(), connection);
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void deregisterConnection(Connection connection) {
+		// TODO Auto-generated method stub
+		
 	}
 
 

@@ -6,12 +6,16 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TaskInitiate implements Event {
-	private int type;
+	private int type=Protocol.TASK_INITIATE;
 
 	@Override
 	public int getType() {
+		return type;
 		// TODO Auto-generated method stub
 
+	}
+	
+	public TaskInitiate(){
 	}
 
 	@Override

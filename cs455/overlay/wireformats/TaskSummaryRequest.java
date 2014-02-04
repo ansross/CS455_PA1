@@ -6,9 +6,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 public class TaskSummaryRequest implements Event {
-	private int type;
+	private int type=Protocol.TASK_SUMMARY_REQUEST;
 	@Override
 	public int getType() {
+		return type;
 		// TODO Auto-generated method stub
 
 	}

@@ -3,15 +3,15 @@ package cs455.overlay.node;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Hashtable;
 
 import cs455.overlay.transport.*;
-import cs455.overlay.wireformats.Event;
-import cs455.overlay.wireformats.Protocol;
-import cs455.overlay.wireformats.RegisterRequest;
 import cs455.overlay.wireformats.*;
 import cs455.overlay.transport.TCPServerThread;
 
 public class MessagingNode implements Node {
+	
+	private Hashtable<String, Connection> establishedConnections;
 	//msgNodes Send: register_requests, deregister requests, message, task_complete, task_summary_response
 	//msgNodes recieve: link_weights, message, messaging_nodes_list, register_response, task_initiate, task_summary_request
 	
@@ -35,7 +35,7 @@ public class MessagingNode implements Node {
 	}
 	
 	public MessagingNode(){
-		
+		establishedConnections = new Hashtable<String, Connection>();
 		numMessagesSent = 0;
 		sumMessagesSent =0;
 		numMessagesRecieved =0;
@@ -110,6 +110,19 @@ public class MessagingNode implements Node {
 	
 	public String messageNodeInfo(){
 		return hostName + ":"+portNum;
+	}
+
+	@Override
+	public void registerConnection(Connection connection) {
+		establishedConnections.put(connection.getName(), connection);
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void deregisterConnection(Connection connection) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

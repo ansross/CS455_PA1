@@ -26,6 +26,7 @@ public class LinkWeights implements Event {
 
 	@Override
 	public int getType() {
+		return type;
 		// TODO Auto-generated method stub
 
 	}
