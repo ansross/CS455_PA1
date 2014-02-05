@@ -16,7 +16,7 @@ public class MessagingNodesList implements Event {
 
 	@Override
 	public int getType() {
-		// TODO Auto-generated method stub
+		return type;	// TODO Auto-generated method stub
 
 	}
 

@@ -3,10 +3,13 @@ package cs455.overlay.node;
 public class nodeInformation {
 	private String IPAddress;
 	private int portNum;
+	private String hostName;
 	
-	public nodeInformation(String IPAddArg, int portArg){
+	public nodeInformation(String IPAddArg, int portArg, String hostNameArg){
 		IPAddress = IPAddArg;
 		portNum = portArg;
+		hostName = hostNameArg;
+		
 	}
 	
 	public boolean equals(nodeInformation rhs){
@@ -19,7 +22,8 @@ public class nodeInformation {
 	}
 	
 	public void print(){
-		System.out.println("IPAddress: "+IPAddress +"\tportNum: "+portNum);
+		//System.out.println("IPAddress: "+IPAddress +"\tportNum: "+portNum);
+		System.out.println(hostName+":"+portNum);
 	}
 
 	

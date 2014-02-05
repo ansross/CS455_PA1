@@ -1,0 +1,7 @@
+spawn an ssh
+send commands
+end with interact
+put expect "$" between each line?
+
+
+have a last script that xterm(or names of terminal program) -X name-of-terminal "<bash script name>" & 

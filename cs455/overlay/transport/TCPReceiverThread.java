@@ -30,28 +30,23 @@ public class TCPReceiverThread extends Thread{
 	}
 	
 	public void run(){
-		System.out.println("Thread running");
 		int dataLength;
 		boolean EOFExcept = false;
 		while(socket != null){
 			//dataLength = din.readInt();
 			try{
-				System.out.println("listening");
+				//System.out.println("listening");
 				dataLength = din.readInt();
-				System.out.println("read DataLength");
+				//System.out.println("read DataLength");
 				
 				byte[] data = new byte[dataLength];
-				System.out.println("1");
+				//System.out.println("1");
 				din.readFully(data, 0, dataLength);
-				System.out.println("2");
-				//if(dataLength>1){
-					System.out.println("2.5");
-					Event event = EventFactory.getEvent(data);
-					System.out.println("3");
-					myNode.onEvent(event, socket);
-					//setter.addResult(event);
-				//}
-				
+				//System.out.println("2");
+				//System.out.println("2.5");
+				Event event = EventFactory.getEvent(data);
+				//System.out.println("3");
+				myNode.onEvent(event, socket);				
 			}catch(EOFException eof){
 				System.out.println("EOF Exception");
 				System.out.println(eof.getMessage());
@@ -59,8 +54,9 @@ public class TCPReceiverThread extends Thread{
 				break;
 			}
 			catch (SocketException se){
-				System.out.println("Socket Exception");
+				System.out.println("Reciever Socket Exception");
 				System.out.println(se.getMessage());
+				se.printStackTrace();
 				break;
 			} catch (IOException ioe){
 				System.out.println("IOException.");
@@ -71,9 +67,9 @@ public class TCPReceiverThread extends Thread{
 				break;
 			}
 		}
-		System.out.println("here");
-		System.out.println("Socket!=null: ");
-		System.out.println(socket!=null);
+		//System.out.println("here");
+		//System.out.println("Socket!=null: ");
+		//System.out.println(socket!=null);
 	}
 
 }

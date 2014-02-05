@@ -18,10 +18,10 @@ public class LinkWeights implements Event {
 		links = new ArrayList<Link>();
 		
 		//TODO!!!
-		for(Link l: linkArg){
-			links.add(l.clone());
-			
-		}
+//		for(Link l: linkArg){
+//			links.add(l.clone());
+//			
+//		}
 	}
 
 	@Override

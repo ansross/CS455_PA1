@@ -3,6 +3,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class Protocol {
+	public static final boolean DEBUG = true;
 	public static final int DEREGISTER = 2000;
 	public static final int LINK_WEIGHTS = 2001;
 	public static final int MESSAGE = 2002;

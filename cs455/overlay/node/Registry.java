@@ -6,8 +6,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Scanner;
 
 import util.ResultSetter;
+import util.Utilities;
 import cs455.overlay.transport.Connection;
 import cs455.overlay.transport.TCPSender;
 import cs455.overlay.transport.TCPServerThread;
@@ -18,14 +20,15 @@ public class Registry implements Node {
 	//registry recieves: deregister_request, register_response, task_complete, task_summary_response
 	private ArrayList<nodeInformation> registeredNodes;// = new ArrayList<nodeInformation>();
 	
+	
 	private Hashtable<String, Connection> establishedConnections;// = new Hashtable<String, Connection>();
 	//to recieve events from reciving threads (aka from server thread)
 	//private ArrayList<Event> receivedEvents = new ArrayList<Event>();
 	
-	public Registry(){
+	public Registry(int portNum){
 		establishedConnections = new Hashtable<String, Connection>();
 		registeredNodes = new ArrayList<nodeInformation>();
-		new TCPServerThread(this, 15005).start();
+		new TCPServerThread(this, portNum).start();
 		
 	}
 	
@@ -34,8 +37,11 @@ public class Registry implements Node {
 			System.err.println("Usage: java cs455.overlay.node.Registry <port number>");
 			System.exit(1);
 		}
-		
-		Registry reg = new Registry();
+		int portNum = Integer.parseInt(args[0]);
+		Registry reg = new Registry(portNum);
+		while(true){
+			reg.getCommandlineInput();
+		}
 		
 	}
 
@@ -72,7 +78,7 @@ public class Registry implements Node {
 		//success==1 is successful, ==0 is unsuccessful
 		byte success = 1;
 		String message="";
-		nodeInformation newNodeInfo = new nodeInformation(regReq.getIPAddress(), regReq.getPortNum());
+		nodeInformation newNodeInfo = new nodeInformation(regReq.getIPAddress(), regReq.getPortNum(), socket.getInetAddress().getHostName());
 		newNodeInfo.print();
 		for(nodeInformation n: registeredNodes){
 			if(n.equals(newNodeInfo)){
@@ -90,8 +96,8 @@ public class Registry implements Node {
 		}
 		
 		System.out.println("Response Message: "+message);
-		TCPSender sender = establishedConnections.get("fish").getSender();
-		System.out.println(socket.getLocalPort());
+		System.out.println("From Registration: "+Utilities.createKeyFromSocket(socket));
+		TCPSender sender = establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender();
 		sender.sendData(new RegisterResponse(success, message).getByte());
 		System.out.println("Sent response");
 
@@ -108,6 +114,83 @@ public class Registry implements Node {
 
 	@Override
 	public void deregisterConnection(Connection connection) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void getCommandlineInput() {
+		Scanner input = new Scanner(System.in);
+		boolean exit = false;
+		while(!exit){
+			
+			String command = input.next();
+			System.out.println("Your Command: " + command +" does nothing!!");
+			switch(command){
+			case "list-messaging-nodes":
+				listMessagingingNodes();
+				break;
+			case "list-weights":
+				listWeights();
+				break;
+			case "setup-overlay":
+				int numberOfConnections = input.nextInt();
+				if(Protocol.DEBUG){
+					System.out.println("Number of connections: "+numberOfConnections);
+				}
+				setupOverlay(numberOfConnections);
+				break;
+			case "send-overlay-link-weights":
+				sendOverlayLinkWeights();
+				break;
+			case "start":
+				start();
+				break;
+			case "list-commands":
+				System.out.println("list-messaging-nodes \nlist-weights\nsetup-overlay\nsend-overlay-link-weights\nstart");
+				break;
+			default:
+				System.out.println("ERROR: command "+command+" not supported. \n To see supported commands use command list-commands");
+				break;
+				
+			}
+		}
+		input.close();
+		
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void start() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void sendOverlayLinkWeights() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void setupOverlay(int numberOfConnections) {
+		if(numberOfConnections!=4){
+			System.out.println("SYSTEM DOES NOT SUPPORT NUMBER OF CONNECTIONS != 4");
+		}
+		else{
+			for()
+		}
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void listWeights() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void listMessagingingNodes() {
+		for(nodeInformation node: registeredNodes){
+			node.print();
+		}
 		// TODO Auto-generated method stub
 		
 	}

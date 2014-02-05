@@ -39,7 +39,6 @@ public class EventFactory {
 		case Protocol.MESSAGING_NODES_LIST:
 			break;
 		case Protocol.REGISTER_REQUEST:
-			System.out.println("EventFact 5");
 			retEvent = new RegisterRequest(marshalledBytes);
 			break;
 		case Protocol.REGISTER_RESPONSE:

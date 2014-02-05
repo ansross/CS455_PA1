@@ -3,8 +3,12 @@ package cs455.overlay.node;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Hashtable;
+import java.util.ArrayList;
+import java.util.Scanner;
 
+import util.Utilities;
 import cs455.overlay.transport.*;
 import cs455.overlay.wireformats.*;
 import cs455.overlay.transport.TCPServerThread;
@@ -14,6 +18,8 @@ public class MessagingNode implements Node {
 	private Hashtable<String, Connection> establishedConnections;
 	//msgNodes Send: register_requests, deregister requests, message, task_complete, task_summary_response
 	//msgNodes recieve: link_weights, message, messaging_nodes_list, register_response, task_initiate, task_summary_request
+
+	private ArrayList<Socket> mySockets;
 	
 	private String IPAddress;
 	private int portNum;
@@ -35,12 +41,20 @@ public class MessagingNode implements Node {
 	}
 	
 	public MessagingNode(){
+		mySockets = new ArrayList<Socket>();
 		establishedConnections = new Hashtable<String, Connection>();
 		numMessagesSent = 0;
 		sumMessagesSent =0;
 		numMessagesRecieved =0;
 		sumMessagesRecieved = 0;
 		numMessagesRelayed =0;
+		try {
+			hostName = InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Host Name: " + hostName);
 		
 		new TCPServerThread(this).start();
 	}
@@ -58,36 +72,78 @@ public class MessagingNode implements Node {
 		String registryHostName = args[0];
 		int registryPortNum = Integer.parseInt(args[1]);
 		
-		msgNode.attemptRegistration(registryHostName, registryPortNum);
-		while(true){}
+		try (
+				Socket socket = new Socket(registryHostName, registryPortNum);
+		)
+		{
+			msgNode.attemptRegistration(socket);
+			msgNode.getCommandlineInput();
+			
+		}catch(IOException e){
+			System.out.println("IOException Message Node");
+			System.out.println(e);
+		}
+
+//msgNode.attemptRegistration(registryHostName, registryPortNum);
 	}
 	
-	private void attemptRegistration(String registryHostName, int registryPortNum){
-		try(	//try to connect to registry
+	public void getCommandlineInput(){
+		Scanner input = new Scanner(System.in);
+		boolean exit = false;
+		while(!exit){
+			
+			String command = input.next();
+			System.out.println("Your Command: " + command +" does nothing!!");
+			switch(command){
+			case "print-shortest-path":
+				printShortestPath();
+				break;
+			case "exit-overlay":
+				exitOverlay();
+				break;
+				default:
+					System.out.println("ERROR: Command \""+command+"\" not supported");
+			}
+		}
+		input.close();
+		
+	}
+	
+	private void exitOverlay() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void printShortestPath() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void attemptRegistration(Socket socket){//
+			//String registryHostName, int registryPortNum){
+		try//(	//try to connect to registry
 				
-				Socket socket = new Socket(registryHostName, registryPortNum);
+	//			Socket socket = new Socket(registryHostName, registryPortNum);
 
 				
-				)						
+			//	)						
 				{
 			new Connection(this, socket);
-			//new TCPReceiverThread(this, socket).start();
+			mySockets.add(socket);
 			System.out.println("got Socket");
-			//TCPSender sender = establishedConnections.get("fish").getSender();//new TCPSender(socket);
 			System.out.println("port num "+socket.getLocalPort());
-			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), "Tester");
-			establishedConnections.get("fish").getSender().sendData(regReq.getByte());
+			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), new String(this.hostName+":"+socket.getLocalPort()));
+			establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
 			//DELETE ME
-			establishedConnections.get("fish").getSender().sendData(regReq.getByte());
 			System.out.println("Request Sent");
-			while(true){}
-			
 			
 		}catch(IOException e){
 			System.out.println("IOExecption Message Node");
 					System.out.println(e);
 		}
 	}
+	
+	
 
 	@Override
 	public void onEvent(Event event, Socket socket) {

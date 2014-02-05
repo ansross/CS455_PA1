@@ -14,10 +14,13 @@ public class TCPSender {
 	}
 	
 	public void sendData(byte[] dataToSend) throws IOException{
-		int dataLength = dataToSend.length;
+	try{	int dataLength = dataToSend.length;
 		dout.writeInt(dataLength);
 		dout.write(dataToSend, 0, dataLength);
-		dout.flush();
+		dout.flush();}catch(IOException ioe){
+			System.out.println("Sender IOE");
+			ioe.printStackTrace();
+		}
 	}
 
 }
