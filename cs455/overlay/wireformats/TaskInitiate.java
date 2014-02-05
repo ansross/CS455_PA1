@@ -18,6 +18,10 @@ public class TaskInitiate implements Event {
 	public TaskInitiate(){
 	}
 
+	public TaskInitiate(byte[] marshalledBytes) {
+		// TODO Auto-generated constructor stub
+	}
+
 	@Override
 	public byte[] getByte() throws IOException {
 		// TODO Auto-generated method stub

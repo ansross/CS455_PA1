@@ -7,6 +7,10 @@ import java.io.IOException;
 
 public class TaskSummaryRequest implements Event {
 	private int type=Protocol.TASK_SUMMARY_REQUEST;
+	public TaskSummaryRequest(byte[] marshalledBytes) {
+		// TODO Auto-generated constructor stub
+	}
+
 	@Override
 	public int getType() {
 		return type;

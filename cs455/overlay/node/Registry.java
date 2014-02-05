@@ -125,12 +125,12 @@ public class Registry implements Node {
 		while(!exit){
 			
 			String command = input.next();
-			System.out.println("Your Command: " + command +" does nothing!!");
 			switch(command){
 			case "list-messaging-nodes":
 				listMessagingingNodes();
 				break;
 			case "list-weights":
+				System.out.println("Your Command: " + command +" does nothing!!");
 				listWeights();
 				break;
 			case "setup-overlay":
@@ -141,12 +141,15 @@ public class Registry implements Node {
 				setupOverlay(numberOfConnections);
 				break;
 			case "send-overlay-link-weights":
+				System.out.println("Your Command: " + command +" does nothing!!");
 				sendOverlayLinkWeights();
 				break;
 			case "start":
+				System.out.println("Your Command: " + command +" does nothing!!");
 				start();
 				break;
 			case "list-commands":
+				
 				System.out.println("list-messaging-nodes \nlist-weights\nsetup-overlay\nsend-overlay-link-weights\nstart");
 				break;
 			default:
@@ -176,10 +179,61 @@ public class Registry implements Node {
 			System.out.println("SYSTEM DOES NOT SUPPORT NUMBER OF CONNECTIONS != 4");
 		}
 		else{
-			for()
+			//map each node to the list of nodes it needs to connect with
+			Hashtable<String, ArrayList<String>> overlay = new Hashtable<String, ArrayList<String>>(registeredNodes.size());
+			createOverlay(overlay);
+			sendOverlay(overlay);
 		}
-		// TODO Auto-generated method stub
+	}
+	
+	private void sendOverlay(Hashtable<String, ArrayList<String>> overlay){
+		for(nodeInformation node: registeredNodes){
+			ArrayList<String> nodesConnections = overlay.get(node.getHostPort());
+			/*ArrayList<String> nodeConnectionsNames = new ArrayList<String>();
+			for(String connection: nodesConnections){
+				nodeConnectionsNames.add(connection);
+			}*/
+			//don't send if has no necessary connections
+			if(!nodesConnections.isEmpty()){
+				TCPSender sender = establishedConnections.get(node.getHostPort()).getSender();
+				MessagingNodesList overlayMessage = new MessagingNodesList(nodesConnections.size(), nodesConnections);
+				try {
+					sender.sendData(overlayMessage.getByte());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	private void createOverlay(Hashtable<String, ArrayList<String>> overlay){
+		new Hashtable<String, ArrayList<nodeInformation>>(registeredNodes.size());
+		for(nodeInformation regedNode: registeredNodes){
+			overlay.put(regedNode.getHostPort(), new ArrayList<String>());
+			overlay.get(0);
+		}
+		for(nodeInformation currentNode: registeredNodes){
+			int currentIndex = registeredNodes.indexOf(currentNode);
+			//to avoid negative indicies add the size, since doing modular, won't affect 
+			currentIndex += registeredNodes.size();
+			//try connecting to next, previous, two forward and two nodes backward
+			int[] connectionIndicies ={-1,-2,1,2};// {(currentIndex-1)%registeredNodes.size(), (currentIndex-2)%registeredNodes.size(),
+					//(currentIndex+1)%registeredNodes.size(), (currentIndex+2)%registeredNodes.size()};
 		
+			for(int i=0; i<4; ++i){
+				connectionIndicies[i] = (currentIndex-connectionIndicies[i])%registeredNodes.size();
+			}
+			for(int index: connectionIndicies){
+
+				nodeInformation connectionNode = registeredNodes.get(index);
+				
+				if(overlay.get(connectionNode.getHostPort()).isEmpty() || !(overlay.get(connectionNode.getHostPort()).contains(currentNode.getHostPort()))){
+					overlay.get(currentNode.getHostPort()).add(connectionNode.getHostPort());
+				}
+			}
+		}
+
 	}
 
 	private void listWeights() {

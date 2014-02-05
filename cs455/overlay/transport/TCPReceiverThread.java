@@ -46,6 +46,7 @@ public class TCPReceiverThread extends Thread{
 				//System.out.println("2.5");
 				Event event = EventFactory.getEvent(data);
 				//System.out.println("3");
+				System.out.println("event in TCPreceiver: "+(event==null));
 				myNode.onEvent(event, socket);				
 			}catch(EOFException eof){
 				System.out.println("EOF Exception");

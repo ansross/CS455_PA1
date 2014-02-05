@@ -153,6 +153,8 @@ public class MessagingNode implements Node {
 		case Protocol.MESSAGE:
 			break;
 		case Protocol.MESSAGING_NODES_LIST:
+			System.out.println("got messaging nodes list");
+			System.out.println("I have "+((MessagingNodesList) event).getNumPeerNodes()+" peer nodes");
 			break;
 		case Protocol.REGISTER_RESPONSE:
 			System.out.println("got response");

@@ -31,4 +31,12 @@ public class Connection {
 	public String getName(){
 		return name;
 	}
+	
+	public boolean equals(Connection rhs){
+		return this.name.equals(rhs.name);
+	}
+	
+	public boolean equals(String name){
+		return this.name.equals(name);
+	}
 }

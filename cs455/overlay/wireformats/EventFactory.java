@@ -31,12 +31,13 @@ public class EventFactory {
 			retEvent=new Deregister(marshalledBytes);
 			break;
 		case Protocol.LINK_WEIGHTS:
-			//retEvent = new LinkWeights(marshalledBytes);
+			retEvent = new LinkWeights(marshalledBytes);
 			break;
 		case Protocol.MESSAGE:
-			//retEvent = new Message(marshalledBytes);
+			retEvent = new Message(marshalledBytes);
 			break;
 		case Protocol.MESSAGING_NODES_LIST:
+			retEvent = new MessagingNodesList(marshalledBytes);
 			break;
 		case Protocol.REGISTER_REQUEST:
 			retEvent = new RegisterRequest(marshalledBytes);
@@ -45,12 +46,16 @@ public class EventFactory {
 			retEvent = new RegisterResponse(marshalledBytes);
 			break;
 		case Protocol.TASK_COMPLETE:
+			retEvent= new TaskComplete(marshalledBytes);
 			break;
 		case Protocol.TASK_INITIATE:
+			retEvent = new TaskInitiate(marshalledBytes);
 			break;
 		case Protocol.TASK_SUMMARY_REQUEST:
+			retEvent = new TaskSummaryRequest(marshalledBytes);
 			break;
 		case Protocol.TASK_SUMMARY_RESPONSE:
+			retEvent = new TaskSummaryResponse(marshalledBytes);
 			break;
 		default:
 			System.out.println("Unknown type: "+type);

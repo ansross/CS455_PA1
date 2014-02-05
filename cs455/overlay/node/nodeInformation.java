@@ -17,6 +17,10 @@ public class nodeInformation {
 		
 	}
 	
+	public String getHostPort(){
+		return hostName+":"+portNum;
+	}
+	
 	public boolean equals(MessagingNode rhs){
 		return (this.IPAddress.equals(rhs.getIPAddress()) && this.portNum==rhs.getPortNum());
 	}

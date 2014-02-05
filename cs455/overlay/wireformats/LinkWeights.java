@@ -24,6 +24,10 @@ public class LinkWeights implements Event {
 //		}
 	}
 
+	public LinkWeights(byte[] marshalledBytes) {
+		// TODO Auto-generated constructor stub
+	}
+
 	@Override
 	public int getType() {
 		return type;
