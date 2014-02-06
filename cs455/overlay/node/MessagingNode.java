@@ -171,6 +171,37 @@ public class MessagingNode implements Node {
 
 	}
 	
+	private void setUpOverlay(MessagingNodesList event) {
+		ArrayList<String> peerNames = event.getNodeNames();
+		for(int peer=0; peer<event.getNumPeerNodes(); peer++){
+			//get port number and host name
+			String delims = ":";
+			String[] tokens = peerNames.get(peer).split(delims);
+			String peerHostName = tokens[0];
+			int peerPortNum = Integer.parseInt(tokens[1]);
+			if(Protocol.DEBUG){
+				System.out.println("RegHost:RegPort= "+peerHostName+":"+peerPortNum);
+			}
+			try( Socket socket = new Socket(peerHostName, peerPortNum)){
+				new Connection(this, socket);
+				mySockets.add(socket);
+				//RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), new String(this.hostName+":"+socket.getLocalPort()));
+				//establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
+				//DELETE ME
+				System.out.println("Connected");
+				
+			}catch(IOException ioe){
+				ioe.printStackTrace();
+			}
+			
+			//connect
+			
+			
+		}
+		// TODO Auto-generated method stub
+		
+	}
+	
 	public String messageNodeInfo(){
 		return hostName + ":"+portNum;
 	}
