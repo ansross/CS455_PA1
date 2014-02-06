@@ -7,8 +7,8 @@ echo "Starting Program"
 PROJECT_FILE_PATH="~/cs455/PA1/src"
 MSG_NODE_PATH="cs455.overlay.node.MessagingNode"
 REG_NODE_PATH="cs455.overlay.node.Registry"
-REG_NODE_NAME="montgomery"
-REG_NODE_PORT="15008"
+REG_NODE_NAME="frankfort.cs.colostate.edu"
+REG_NODE_PORT="15009"
 
 cd $PROJECT_FILE_PATH
 echo "Project made"
