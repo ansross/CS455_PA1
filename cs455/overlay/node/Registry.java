@@ -20,12 +20,17 @@ public class Registry implements Node {
 	//registry recieves: deregister_request, register_response, task_complete, task_summary_response
 	private ArrayList<nodeInformation> registeredNodes;// = new ArrayList<nodeInformation>();
 	
+	//to map the socket between register and node to the node Id comprised of node's serverSocket port
+	private Hashtable<String, String> socketToNodeID;
 	
 	private Hashtable<String, Connection> establishedConnections;// = new Hashtable<String, Connection>();
 	//to recieve events from reciving threads (aka from server thread)
 	//private ArrayList<Event> receivedEvents = new ArrayList<Event>();
 	
+	int serverSocketPortNum;
+	
 	public Registry(int portNum){
+		socketToNodeID= new Hashtable<String,String>();
 		establishedConnections = new Hashtable<String, Connection>();
 		registeredNodes = new ArrayList<nodeInformation>();
 		new TCPServerThread(this, portNum).start();
@@ -78,13 +83,13 @@ public class Registry implements Node {
 		//success==1 is successful, ==0 is unsuccessful
 		byte success = 1;
 		String message="";
-		nodeInformation newNodeInfo = new nodeInformation(regReq.getIPAddress(), regReq.getPortNum(), socket.getInetAddress().getHostName());
+		nodeInformation newNodeInfo = new nodeInformation(regReq.getIPAddress(), regReq.getServerPortNum(), socket.getInetAddress().getHostName(), socket.getPort());
 		newNodeInfo.print();
 		for(nodeInformation n: registeredNodes){
 			if(n.equals(newNodeInfo)){
 				success = 0;
 				message = "Node with IPAddress " + regReq.getIPAddress() + " and port number "
-						+ regReq.getPortNum() + " is already registered.";
+						+ regReq.getServerPortNum() + " is already registered.";
 				break;
 			}
 		}
@@ -150,7 +155,7 @@ public class Registry implements Node {
 				break;
 			case "list-commands":
 				
-				System.out.println("list-messaging-nodes \nlist-weights\nsetup-overlay\nsend-overlay-link-weights\nstart");
+				System.out.println("list-messaging-nodes \nlist-weights\nsetup-overlay <num-links (must = 4)>\nsend-overlay-link-weights\nstart");
 				break;
 			default:
 				System.out.println("ERROR: command "+command+" not supported. \n To see supported commands use command list-commands");
@@ -188,14 +193,14 @@ public class Registry implements Node {
 	
 	private void sendOverlay(Hashtable<String, ArrayList<String>> overlay){
 		for(nodeInformation node: registeredNodes){
-			ArrayList<String> nodesConnections = overlay.get(node.getHostPort());
+			ArrayList<String> nodesConnections = overlay.get(node.getHostServerPort());
 			/*ArrayList<String> nodeConnectionsNames = new ArrayList<String>();
 			for(String connection: nodesConnections){
 				nodeConnectionsNames.add(connection);
 			}*/
 			//don't send if has no necessary connections
 			if(!nodesConnections.isEmpty()){
-				TCPSender sender = establishedConnections.get(node.getHostPort()).getSender();
+				TCPSender sender = establishedConnections.get(node.getHostRegPort()).getSender();
 				MessagingNodesList overlayMessage = new MessagingNodesList(nodesConnections.size(), nodesConnections);
 				try {
 					sender.sendData(overlayMessage.getByte());
@@ -210,7 +215,7 @@ public class Registry implements Node {
 	private void createOverlay(Hashtable<String, ArrayList<String>> overlay){
 		new Hashtable<String, ArrayList<nodeInformation>>(registeredNodes.size());
 		for(nodeInformation regedNode: registeredNodes){
-			overlay.put(regedNode.getHostPort(), new ArrayList<String>());
+			overlay.put(regedNode.getHostServerPort(), new ArrayList<String>());
 			overlay.get(0);
 		}
 		for(nodeInformation currentNode: registeredNodes){
@@ -228,8 +233,8 @@ public class Registry implements Node {
 
 				nodeInformation connectionNode = registeredNodes.get(index);
 				
-				if(overlay.get(connectionNode.getHostPort()).isEmpty() || !(overlay.get(connectionNode.getHostPort()).contains(currentNode.getHostPort()))){
-					overlay.get(currentNode.getHostPort()).add(connectionNode.getHostPort());
+				if(overlay.get(connectionNode.getHostServerPort()).isEmpty() || !(overlay.get(connectionNode.getHostServerPort()).contains(currentNode.getHostServerPort()))){
+					overlay.get(currentNode.getHostServerPort()).add(connectionNode.getHostServerPort());
 				}
 			}
 		}
@@ -245,6 +250,13 @@ public class Registry implements Node {
 		for(nodeInformation node: registeredNodes){
 			node.print();
 		}
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setServerSocketPortNum(int localPort) {
+		serverSocketPortNum=localPort;
 		// TODO Auto-generated method stub
 		
 	}

@@ -37,7 +37,9 @@ public class TCPServerThread extends Thread{
 	public void run(){
 		try( 
 				ServerSocket serverSocket = new ServerSocket(this.serverSocketPortNum);)
+				
 				{
+				myNode.setServerSocketPortNum(serverSocket.getLocalPort());
 				while(true){
 					Socket socket = serverSocket.accept();
 					new Connection(myNode, socket);

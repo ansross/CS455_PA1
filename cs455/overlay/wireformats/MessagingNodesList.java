@@ -86,5 +86,11 @@ public class MessagingNodesList implements Event {
 		// TODO Auto-generated method stub
 
 	}
+	
+	public void printPeerNodes(){
+		for(int node=0; node<numPeerNodes; node++){
+			System.out.println(nodeNames.get(node));
+		}
+	}
 
 }

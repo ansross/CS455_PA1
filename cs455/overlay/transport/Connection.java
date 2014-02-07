@@ -8,13 +8,18 @@ import cs455.overlay.node.*;
 
 public class Connection {
 	private Node node;
-	private String name;
+	private String nameFromSocket;
+	private String nameFromServerSocket;
 	private TCPReceiverThread receiver;
 	private TCPSender sender;
 	
+	public void setNameFromServerSocket(String nameArg){
+		nameFromServerSocket= nameArg;
+	}
+	
 	public Connection(Node node, Socket socket) throws IOException{
 		
-		this.name = Utilities.createKeyFromSocket(socket);
+		this.nameFromSocket = Utilities.createKeyFromSocket(socket);
 		System.out.println("Connection name: "+Utilities.createKeyFromSocket(socket));
 		this.node = node;
 		this.receiver = new TCPReceiverThread(node, socket);
@@ -29,14 +34,14 @@ public class Connection {
 	}
 	
 	public String getName(){
-		return name;
+		return nameFromSocket;
 	}
 	
 	public boolean equals(Connection rhs){
-		return this.name.equals(rhs.name);
+		return this.nameFromSocket.equals(rhs.nameFromSocket);
 	}
 	
 	public boolean equals(String name){
-		return this.name.equals(name);
+		return this.nameFromSocket.equals(name);
 	}
 }

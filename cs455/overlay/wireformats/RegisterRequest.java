@@ -11,18 +11,18 @@ import java.io.IOException;
 public class RegisterRequest implements Event {
 	private int type = Protocol.REGISTER_REQUEST;
 	private String IPAddress;
-	private int PortNum;
+	private int serverPortNum;
 	private String AssignedID;
 	
 	public RegisterRequest(String IPAddArg, int portNumArg, String idArg){
 		IPAddress = IPAddArg;
-		PortNum = portNumArg;
-		System.out.println("Port Num " + PortNum);
+		serverPortNum = portNumArg;
+		System.out.println("Port Num " + serverPortNum);
 		AssignedID = idArg;
 	}
 	
 	public void print(){
-		System.out.println("IPAdd: "+IPAddress + ", PortNum: "+PortNum +", id: "+AssignedID);
+		System.out.println("IPAdd: "+IPAddress + ", PortNum: "+serverPortNum +", id: "+AssignedID);
 	}
 	
 	@Override
@@ -35,8 +35,8 @@ public class RegisterRequest implements Event {
 		return IPAddress;
 	}
 	
-	public int getPortNum(){
-		return PortNum;
+	public int getServerPortNum(){
+		return serverPortNum;
 	}
 	
 	public RegisterRequest(byte[] marshalledBytes) throws IOException{
@@ -58,7 +58,7 @@ public class RegisterRequest implements Event {
 		this.IPAddress = new String(IPAddBytes);
 	
 		//port number
-		PortNum = din.readInt();
+		serverPortNum = din.readInt();
 		
 		//ID
 		int IDLength = din.readInt();
@@ -85,7 +85,7 @@ public class RegisterRequest implements Event {
 		dout.write(IPBytes);
 		
 		//Port Number
-		dout.writeInt(PortNum);
+		dout.writeInt(serverPortNum);
 		
 		//ID
 		byte[] IDBytes = AssignedID.getBytes();

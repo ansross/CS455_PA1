@@ -1,6 +1,6 @@
 #!/bin/bash
 
-gnome-terminal -e "expect -f registry.sh" &
+#gnome-terminal -e "expect -f registry.sh" &
 gnome-terminal -e "expect -f montgomery.sh" &
 gnome-terminal -e "expect -f albany.sh" &
 gnome-terminal -e "expect -f columbia.sh" &

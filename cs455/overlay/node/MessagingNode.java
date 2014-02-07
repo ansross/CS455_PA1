@@ -29,6 +29,11 @@ public class MessagingNode implements Node {
 	private long sumMessagesRecieved;
 	private int numMessagesRelayed;
 	private String hostName;
+	private int serverSocketPortNum;
+	
+	public void setServerSocketPortNum(int portArg){
+		this. serverSocketPortNum=portArg;
+	}
 	
 	//private TCPSender sender;
 	
@@ -62,7 +67,7 @@ public class MessagingNode implements Node {
 	public static void main(String[] args) throws IOException{
 		if(args.length != 2){
 			System.err.println("Usage: "
-					+ "java cs455.overlay.node.MessagingNOde "
+					+ "java cs455.overlay.node.MessagingNode "
 					+ "<registry-host> <registry-port>" );
 			System.exit(1);
 		}
@@ -132,7 +137,7 @@ public class MessagingNode implements Node {
 			mySockets.add(socket);
 			System.out.println("got Socket");
 			System.out.println("port num "+socket.getLocalPort());
-			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), new String(this.hostName+":"+socket.getLocalPort()));
+			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), this.serverSocketPortNum, new String(this.hostName+":"+socket.getLocalPort()));
 			establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
 			//DELETE ME
 			System.out.println("Request Sent");
@@ -154,7 +159,9 @@ public class MessagingNode implements Node {
 			break;
 		case Protocol.MESSAGING_NODES_LIST:
 			System.out.println("got messaging nodes list");
+			System.out.println("My name is: "+hostName+":"+serverSocketPortNum);
 			System.out.println("I have "+((MessagingNodesList) event).getNumPeerNodes()+" peer nodes");
+			((MessagingNodesList) event).printPeerNodes();
 			break;
 		case Protocol.REGISTER_RESPONSE:
 			System.out.println("got response");
