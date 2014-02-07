@@ -31,13 +31,12 @@ public class TCPReceiverThread extends Thread{
 	
 	public void run(){
 		int dataLength;
-		boolean EOFExcept = false;
 		while(socket != null){
 			//dataLength = din.readInt();
 			try{
-				//System.out.println("listening");
+				System.out.println("listening");
 				dataLength = din.readInt();
-				//System.out.println("read DataLength");
+				System.out.println("read DataLength");
 				
 				byte[] data = new byte[dataLength];
 				//System.out.println("1");

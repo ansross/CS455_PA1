@@ -28,6 +28,7 @@ public class Registry implements Node {
 	//private ArrayList<Event> receivedEvents = new ArrayList<Event>();
 	
 	int serverSocketPortNum;
+	private TCPServerThread server;
 	
 	public Registry(int portNum){
 		socketToNodeID= new Hashtable<String,String>();
@@ -37,13 +38,26 @@ public class Registry implements Node {
 		
 	}
 	
+	public void setServerThread(TCPServerThread arg){
+		this.server = arg;
+	}
+	
+	public TCPServerThread getServerThread(){
+		return server;
+	}
+	
+	
 	public static void main(String [] args) throws IOException{
+		System.out.println("Registry Starts");
 		if(args.length != 1){
 			System.err.println("Usage: java cs455.overlay.node.Registry <port number>");
 			System.exit(1);
 		}
 		int portNum = Integer.parseInt(args[0]);
 		Registry reg = new Registry(portNum);
+		//reg.setServerThread(new TCPServerThread(reg));
+		//reg.getServerThread().start();
+		System.out.println("Server thread started");
 		while(true){
 			reg.getCommandlineInput();
 		}
@@ -180,13 +194,14 @@ public class Registry implements Node {
 	}
 
 	private void setupOverlay(int numberOfConnections) {
-		if(numberOfConnections!=4){
-			System.out.println("SYSTEM DOES NOT SUPPORT NUMBER OF CONNECTIONS != 4");
-		}
-		else{
+		//if(numberOfConnections!=4){
+			//System.out.println("SYSTEM DOES NOT SUPPORT NUMBER OF CONNECTIONS != 4");
+		//}
+		//else
+		{
 			//map each node to the list of nodes it needs to connect with
 			Hashtable<String, ArrayList<String>> overlay = new Hashtable<String, ArrayList<String>>(registeredNodes.size());
-			createOverlay(overlay);
+			createOverlay(overlay, numberOfConnections);
 			sendOverlay(overlay);
 		}
 	}
@@ -212,7 +227,7 @@ public class Registry implements Node {
 		}
 	}
 	
-	private void createOverlay(Hashtable<String, ArrayList<String>> overlay){
+	private void createOverlay(Hashtable<String, ArrayList<String>> overlay, int numConnections){
 		new Hashtable<String, ArrayList<nodeInformation>>(registeredNodes.size());
 		for(nodeInformation regedNode: registeredNodes){
 			overlay.put(regedNode.getHostServerPort(), new ArrayList<String>());
@@ -226,7 +241,7 @@ public class Registry implements Node {
 			int[] connectionIndicies ={-1,-2,1,2};// {(currentIndex-1)%registeredNodes.size(), (currentIndex-2)%registeredNodes.size(),
 					//(currentIndex+1)%registeredNodes.size(), (currentIndex+2)%registeredNodes.size()};
 		
-			for(int i=0; i<4; ++i){
+			for(int i=0; i<numConnections; ++i){
 				connectionIndicies[i] = (currentIndex-connectionIndicies[i])%registeredNodes.size();
 			}
 			for(int index: connectionIndicies){

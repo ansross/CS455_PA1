@@ -92,5 +92,9 @@ public class MessagingNodesList implements Event {
 			System.out.println(nodeNames.get(node));
 		}
 	}
+	public ArrayList<String> getNodeNames() {
+		// TODO Auto-generated method stub
+		return nodeNames;
+	}
 
 }

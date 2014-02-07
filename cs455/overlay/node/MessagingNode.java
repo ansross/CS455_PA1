@@ -30,6 +30,7 @@ public class MessagingNode implements Node {
 	private int numMessagesRelayed;
 	private String hostName;
 	private int serverSocketPortNum;
+	private TCPServerThread server;
 	
 	public void setServerSocketPortNum(int portArg){
 		this. serverSocketPortNum=portArg;
@@ -55,13 +56,23 @@ public class MessagingNode implements Node {
 		numMessagesRelayed =0;
 		try {
 			hostName = InetAddress.getLocalHost().getHostName();
+			System.out.println("Host Name: " + hostName);
+			new TCPServerThread(this).start();
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("Host Name: " + hostName);
+
 		
-		new TCPServerThread(this).start();
+		
+	}
+	
+	public void setServerThread(TCPServerThread arg){
+		this.server = arg;
+	}
+	
+	public TCPServerThread getServerThread(){
+		return server;
 	}
 	
 	public static void main(String[] args) throws IOException{
@@ -73,6 +84,8 @@ public class MessagingNode implements Node {
 		}
 		
 		MessagingNode msgNode = new MessagingNode();
+		//msgNode.setServerThread(new TCPServerThread(msgNode));
+		//msgNode.getServerThread().start();
 		
 		String registryHostName = args[0];
 		int registryPortNum = Integer.parseInt(args[1]);
@@ -87,6 +100,10 @@ public class MessagingNode implements Node {
 		}catch(IOException e){
 			System.out.println("IOException Message Node");
 			System.out.println(e);
+		}
+		
+		while(true){
+			msgNode.getCommandlineInput();
 		}
 
 //msgNode.attemptRegistration(registryHostName, registryPortNum);
@@ -162,6 +179,7 @@ public class MessagingNode implements Node {
 			System.out.println("My name is: "+hostName+":"+serverSocketPortNum);
 			System.out.println("I have "+((MessagingNodesList) event).getNumPeerNodes()+" peer nodes");
 			((MessagingNodesList) event).printPeerNodes();
+			setUpOverlay((MessagingNodesList)event);
 			break;
 		case Protocol.REGISTER_RESPONSE:
 			System.out.println("got response");
@@ -187,20 +205,23 @@ public class MessagingNode implements Node {
 			String peerHostName = tokens[0];
 			int peerPortNum = Integer.parseInt(tokens[1]);
 			if(Protocol.DEBUG){
-				System.out.println("RegHost:RegPort= "+peerHostName+":"+peerPortNum);
+				System.out.println("PeerHost:PeerPort= "+peerHostName+":"+peerPortNum);
 			}
 			try( Socket socket = new Socket(peerHostName, peerPortNum)){
-				new Connection(this, socket);
+				Connection newCon = new Connection(this, socket);
 				mySockets.add(socket);
 				//RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), new String(this.hostName+":"+socket.getLocalPort()));
 				//establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
 				//DELETE ME
+				RegisterResponse regres = new RegisterResponse((byte)0, "peer message recieved"); 
+				newCon.getSender().sendData(regres.getByte());
 				System.out.println("Connected");
-				
+				//DELETE ME!!!!
+				while(true){}	
 			}catch(IOException ioe){
 				ioe.printStackTrace();
 			}
-			
+			 
 			//connect
 			
 			
@@ -225,5 +246,7 @@ public class MessagingNode implements Node {
 		// TODO Auto-generated method stub
 		
 	}
+	
+	
 
 }
