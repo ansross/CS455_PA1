@@ -6,7 +6,9 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Hashtable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Scanner;
+import java.util.Set;
 
 import util.Utilities;
 import cs455.overlay.transport.*;
@@ -20,6 +22,9 @@ public class MessagingNode implements Node {
 	//msgNodes recieve: link_weights, message, messaging_nodes_list, register_response, task_initiate, task_summary_request
 
 	private ArrayList<Socket> mySockets;
+	private Hashtable<String, String> serverNameToSocketName;
+	//initialized when link weights received 
+	private Hashtable<String, LinkInfo> serverNametoLinkWeights;
 	
 	private String IPAddress;
 	private int portNum;
@@ -36,6 +41,10 @@ public class MessagingNode implements Node {
 		this. serverSocketPortNum=portArg;
 	}
 	
+	public String getHostServer(){
+		return hostName+":"+serverSocketPortNum;
+	}
+	
 	//private TCPSender sender;
 	
 	public String getIPAddress(){
@@ -47,6 +56,7 @@ public class MessagingNode implements Node {
 	}
 	
 	public MessagingNode(){
+		serverNameToSocketName = new Hashtable<String, String>();
 		mySockets = new ArrayList<Socket>();
 		establishedConnections = new Hashtable<String, Connection>();
 		numMessagesSent = 0;
@@ -143,13 +153,8 @@ public class MessagingNode implements Node {
 
 	private void attemptRegistration(Socket socket){//
 			//String registryHostName, int registryPortNum){
-		try//(	//try to connect to registry
-				
-	//			Socket socket = new Socket(registryHostName, registryPortNum);
-
-				
-			//	)						
-				{
+		try	
+		{
 			new Connection(this, socket);
 			mySockets.add(socket);
 			System.out.println("got Socket");
@@ -171,8 +176,16 @@ public class MessagingNode implements Node {
 	public void onEvent(Event event, Socket socket) {
 		switch(event.getType()){
 		case Protocol.LINK_WEIGHTS:
+			System.out.println("Recieved link weights");
+			saveLinkInfo((LinkWeights) event);
 			break;
 		case Protocol.MESSAGE:
+			try {
+				parseMessage((Message) event);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			break;
 		case Protocol.MESSAGING_NODES_LIST:
 			System.out.println("got messaging nodes list");
@@ -181,9 +194,9 @@ public class MessagingNode implements Node {
 			((MessagingNodesList) event).printPeerNodes();
 			setUpOverlay((MessagingNodesList)event);
 			break;
-		case Protocol.REGISTER_RESPONSE:
+		case Protocol.REGISTER_REQUEST:
 			System.out.println("got response");
-			System.out.println(((RegisterResponse) event).getAdditionalInfo());
+			registerPeerNode((RegisterRequest)event, socket);
 			break;
 		case Protocol.TASK_INITIATE:
 			break;
@@ -194,6 +207,67 @@ public class MessagingNode implements Node {
 		}
 		// TODO Auto-generated method stub
 
+	}
+	
+	private void saveLinkInfo(LinkWeights event) {
+		ArrayList<String> links = event.getLinks();
+		serverNametoLinkWeights = new Hashtable<String, LinkInfo>(links.size());
+		for(String str: links){
+			String delims = ":| ";
+			String[] tokens = str.split(delims);
+			for(String s: tokens){
+				System.out.println("Token: "+s);
+			}
+			LinkInfo li = new LinkInfo(tokens[0], Integer.parseInt(tokens[1]), tokens[2], Integer.parseInt(tokens[3]), Integer.parseInt(tokens[4]));
+			if(Protocol.DEBUG){
+				System.out.println("added link: "+li.getHostBPortB());
+			}
+			serverNametoLinkWeights.put(li.getHostBPortB(), li);
+		}
+		if(Protocol.DEBUG){
+			System.out.println("Link weights: ");
+			 Set entrySet = serverNametoLinkWeights.entrySet();
+			 // Obtain an Iterator for the entries Set
+			 Iterator it = entrySet.iterator();
+			 // Iterate through Hashtable entries
+			 while(it.hasNext()){
+				 System.out.println(it.next());
+			}
+		}
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void parseMessage(Message msg) throws IOException{
+		ArrayList<String> shortestPathIDs = msg.getShortestPathIDs();
+		if(shortestPathIDs.get(shortestPathIDs.size()-1).equals(this.getHostServer())){
+			keepMessage(msg);
+		}
+		else{
+			relayMessage(msg);
+		}
+		
+	}
+	
+	private void keepMessage(Message msg){
+		numMessagesRecieved++;
+		this.sumMessagesRecieved += msg.getMessage();
+	}
+	
+	private void relayMessage(Message msg) throws IOException{
+		numMessagesRelayed++;
+		ArrayList<String> shortestPathIDs = msg.getShortestPathIDs();
+		for(int i=0; i<shortestPathIDs.size(); ++i){
+			if(shortestPathIDs.get(i).equals(this.getHostServer())){
+				String destinationName = shortestPathIDs.get(i+1);
+				String destinationLocalName = serverNameToSocketName.get(destinationName);
+				establishedConnections.get(destinationLocalName).getSender().sendData(msg.getByte());
+			}
+		}
+	}
+	
+	private void registerPeerNode(RegisterRequest event, Socket socket){
+		serverNameToSocketName.put(event.getID(), Utilities.createKeyFromSocket(socket));
 	}
 	
 	private void setUpOverlay(MessagingNodesList event) {
@@ -207,17 +281,15 @@ public class MessagingNode implements Node {
 			if(Protocol.DEBUG){
 				System.out.println("PeerHost:PeerPort= "+peerHostName+":"+peerPortNum);
 			}
-			try( Socket socket = new Socket(peerHostName, peerPortNum)){
-				Connection newCon = new Connection(this, socket);
+			try{
+				 Socket socket = new Socket(peerHostName, peerPortNum);
+				//Connection newCon = 
+				new Connection(this, socket);
 				mySockets.add(socket);
-				//RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), new String(this.hostName+":"+socket.getLocalPort()));
-				//establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
-				//DELETE ME
-				RegisterResponse regres = new RegisterResponse((byte)0, "peer message recieved"); 
-				newCon.getSender().sendData(regres.getByte());
+				serverNameToSocketName.put(peerHostName+":"+peerPortNum, Utilities.createKeyFromSocket(socket));
+				RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), new String(this.hostName+":"+socket.getLocalPort()));
+				establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
 				System.out.println("Connected");
-				//DELETE ME!!!!
-				while(true){}	
 			}catch(IOException ioe){
 				ioe.printStackTrace();
 			}

@@ -23,6 +23,14 @@ public class nodeInformation {
 		
 	}
 	
+	public int getServerPort(){
+		return serverPortNum;
+	}
+	
+	public String getHost(){
+		return hostName;
+	}
+	
 	public String getHostServerPort(){
 		return hostName+":"+serverPortNum;
 	}

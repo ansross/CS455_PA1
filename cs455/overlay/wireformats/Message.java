@@ -23,6 +23,14 @@ public class Message implements Event {
 
 	}
 	
+	public ArrayList<String> getShortestPathIDs(){
+		return shortestPathIDs;
+	}
+	
+	public int getMessage(){
+		return message;
+	}
+	
 	public Message(byte[] marshalledBytes) throws IOException{
 		ByteArrayInputStream baInStr = 
 				new ByteArrayInputStream(marshalledBytes);

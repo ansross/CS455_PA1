@@ -6,7 +6,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Random;
 import java.util.Scanner;
+import java.util.Set;
 
 import util.ResultSetter;
 import util.Utilities;
@@ -27,10 +30,17 @@ public class Registry implements Node {
 	//to recieve events from reciving threads (aka from server thread)
 	//private ArrayList<Event> receivedEvents = new ArrayList<Event>();
 	
+	//to store overlay
+	Hashtable<String, ArrayList<LinkInfo>> overlay; 
+	int numLinks;
+	
 	int serverSocketPortNum;
 	private TCPServerThread server;
 	
 	public Registry(int portNum){
+		//numLinks = 0;
+		//overlay initilized in setup overlay call
+		//overlay = new Hashtable<String, ArrayList<String>>();
 		socketToNodeID= new Hashtable<String,String>();
 		establishedConnections = new Hashtable<String, Connection>();
 		registeredNodes = new ArrayList<nodeInformation>();
@@ -149,7 +159,6 @@ public class Registry implements Node {
 				listMessagingingNodes();
 				break;
 			case "list-weights":
-				System.out.println("Your Command: " + command +" does nothing!!");
 				listWeights();
 				break;
 			case "setup-overlay":
@@ -161,7 +170,12 @@ public class Registry implements Node {
 				break;
 			case "send-overlay-link-weights":
 				System.out.println("Your Command: " + command +" does nothing!!");
-				sendOverlayLinkWeights();
+				try {
+					sendOverlayLinkWeights();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				break;
 			case "start":
 				System.out.println("Your Command: " + command +" does nothing!!");
@@ -188,35 +202,34 @@ public class Registry implements Node {
 		
 	}
 
-	private void sendOverlayLinkWeights() {
-		// TODO Auto-generated method stub
-		
-	}
+
 
 	private void setupOverlay(int numberOfConnections) {
+		//TODO CHANGE BACK
 		//if(numberOfConnections!=4){
 			//System.out.println("SYSTEM DOES NOT SUPPORT NUMBER OF CONNECTIONS != 4");
 		//}
 		//else
 		{
 			//map each node to the list of nodes it needs to connect with
-			Hashtable<String, ArrayList<String>> overlay = new Hashtable<String, ArrayList<String>>(registeredNodes.size());
-			createOverlay(overlay, numberOfConnections);
-			sendOverlay(overlay);
+			numLinks = 0;
+			overlay = new Hashtable<String, ArrayList<LinkInfo>>(registeredNodes.size());
+			createOverlay(numberOfConnections);
+			sendOverlay();
 		}
 	}
 	
-	private void sendOverlay(Hashtable<String, ArrayList<String>> overlay){
+	private void sendOverlay(){
 		for(nodeInformation node: registeredNodes){
-			ArrayList<String> nodesConnections = overlay.get(node.getHostServerPort());
-			/*ArrayList<String> nodeConnectionsNames = new ArrayList<String>();
-			for(String connection: nodesConnections){
-				nodeConnectionsNames.add(connection);
-			}*/
+			ArrayList<LinkInfo> nodesConnections = overlay.get(node.getHostServerPort());
+			ArrayList<String> nodeConnectionsNames = new ArrayList<String>();
+			for(LinkInfo connection: nodesConnections){
+				nodeConnectionsNames.add(connection.getHostBPortB());
+			}
 			//don't send if has no necessary connections
 			if(!nodesConnections.isEmpty()){
 				TCPSender sender = establishedConnections.get(node.getHostRegPort()).getSender();
-				MessagingNodesList overlayMessage = new MessagingNodesList(nodesConnections.size(), nodesConnections);
+				MessagingNodesList overlayMessage = new MessagingNodesList(nodeConnectionsNames.size(), nodeConnectionsNames);
 				try {
 					sender.sendData(overlayMessage.getByte());
 				} catch (IOException e) {
@@ -227,10 +240,10 @@ public class Registry implements Node {
 		}
 	}
 	
-	private void createOverlay(Hashtable<String, ArrayList<String>> overlay, int numConnections){
+	private void createOverlay(int numConnections){
 		new Hashtable<String, ArrayList<nodeInformation>>(registeredNodes.size());
 		for(nodeInformation regedNode: registeredNodes){
-			overlay.put(regedNode.getHostServerPort(), new ArrayList<String>());
+			overlay.put(regedNode.getHostServerPort(), new ArrayList<LinkInfo>());
 			overlay.get(0);
 		}
 		for(nodeInformation currentNode: registeredNodes){
@@ -238,28 +251,92 @@ public class Registry implements Node {
 			//to avoid negative indicies add the size, since doing modular, won't affect 
 			currentIndex += registeredNodes.size();
 			//try connecting to next, previous, two forward and two nodes backward
-			int[] connectionIndicies ={-1,-2,1,2};// {(currentIndex-1)%registeredNodes.size(), (currentIndex-2)%registeredNodes.size(),
+			int[] connectionIndicies ={1,-1,2,-2};// {(currentIndex-1)%registeredNodes.size(), (currentIndex-2)%registeredNodes.size(),
 					//(currentIndex+1)%registeredNodes.size(), (currentIndex+2)%registeredNodes.size()};
-		
+			int[] sizedConnectionIndicies = new int[numConnections];
 			for(int i=0; i<numConnections; ++i){
-				connectionIndicies[i] = (currentIndex-connectionIndicies[i])%registeredNodes.size();
+				sizedConnectionIndicies[i] = (currentIndex-connectionIndicies[i])%registeredNodes.size();
 			}
-			for(int index: connectionIndicies){
+			for(int index: sizedConnectionIndicies){
 
 				nodeInformation connectionNode = registeredNodes.get(index);
-				
-				if(overlay.get(connectionNode.getHostServerPort()).isEmpty() || !(overlay.get(connectionNode.getHostServerPort()).contains(currentNode.getHostServerPort()))){
-					overlay.get(currentNode.getHostServerPort()).add(connectionNode.getHostServerPort());
+				//if it hasn't been connected the other way, conenct it 
+				if(overlay.get(connectionNode.getHostServerPort()).isEmpty() || 
+						!(overlay.get(connectionNode.getHostServerPort()).contains(currentNode.getHostServerPort())))
+				{
+					overlay.get(currentNode.getHostServerPort()).add(new LinkInfo(currentNode.getHost(), currentNode.getServerPort(),
+																				connectionNode.getHost(), connectionNode.getServerPort()));
+					numLinks++;
 				}
 			}
 		}
+		System.out.println("num links after overlay creation: " + numLinks);
 
 	}
 
 	private void listWeights() {
+		for(nodeInformation ni: registeredNodes){
+			for(LinkInfo li: overlay.get(ni.getHostServerPort())){
+				System.out.println(li.getFullInfo());
+			}
+		}
+
 		// TODO Auto-generated method stub
 		
 	}
+	
+	private void sendOverlayLinkWeights() throws IOException {
+		generateListWeights();
+		sendListWeights();
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private void sendListWeights() throws IOException{
+		ArrayList<String> linkInfoString = new ArrayList<String>(numLinks);
+		for(nodeInformation regedNode: registeredNodes){ 
+			for(LinkInfo li: overlay.get(regedNode.getHostServerPort())){
+				//if(linkInfoString )
+				linkInfoString.add(li.getFullInfo());
+			}
+		}
+		if(Protocol.DEBUG){
+			System.out.println("link info strings:" );
+			for(String s: linkInfoString){
+				System.out.println(s);
+			}
+			System.out.println("in send list weights numLinks: "+numLinks);
+		}
+		LinkWeights lw = new LinkWeights(this.numLinks, linkInfoString);
+		for(nodeInformation regedNode: registeredNodes){
+			System.out.println("Sending to "+regedNode.getHostRegPort());
+			System.out.println(establishedConnections.get(regedNode.getHostRegPort()));
+			establishedConnections.get(regedNode.getHostRegPort()).getSender().sendData(lw.getByte());
+		}
+	}
+	
+	private void generateListWeights(){
+		Random rand = new Random();
+		for(nodeInformation regedNode: registeredNodes){
+			for(LinkInfo li: overlay.get(regedNode.getHostServerPort())){
+				if(regedNode.getHostServerPort().equals(li.getHostBPortB())){
+					System.out.println("FLIP B TO A");
+				}
+				if(li.getWeight() < 0){
+					int linkWeight = rand.nextInt(10)+1;
+					li.setWeight(linkWeight);
+					ArrayList<LinkInfo> arli = overlay.get(li.getHostBPortB());
+					for(int i=0; i<arli.size(); ++i){
+						if(arli.get(i).getHostBPortB().equals(regedNode.getHostServerPort())){
+							arli.get(i).setWeight(linkWeight);
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	
 
 	private void listMessagingingNodes() {
 		for(nodeInformation node: registeredNodes){

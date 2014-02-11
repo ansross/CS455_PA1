@@ -39,6 +39,10 @@ public class RegisterRequest implements Event {
 		return serverPortNum;
 	}
 	
+	public String getID(){
+		return AssignedID;
+	}
+	
 	public RegisterRequest(byte[] marshalledBytes) throws IOException{
 		ByteArrayInputStream baInStr = 
 				new ByteArrayInputStream(marshalledBytes);
