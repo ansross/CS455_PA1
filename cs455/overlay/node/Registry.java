@@ -127,8 +127,8 @@ public class Registry implements Node {
 			
 		}
 		
-		System.out.println("Response Message: "+message);
-		System.out.println("From Registration: "+Utilities.createKeyFromSocket(socket));
+		//System.out.println("Response Message: "+message);
+		//System.out.println("From Registration: "+Utilities.createKeyFromSocket(socket));
 		TCPSender sender = establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender();
 		sender.sendData(new RegisterResponse(success, message).getByte());
 		System.out.println("Sent response");
@@ -343,12 +343,12 @@ public class Registry implements Node {
 			for(String s: linkInfoString){
 				System.out.println(s);
 			}
-			System.out.println("in send list weights numLinks: "+numLinks);
+			//System.out.println("in send list weights numLinks: "+numLinks);
 		}
 		LinkWeights lw = new LinkWeights(this.numLinks, linkInfoString);
 		for(nodeInformation regedNode: registeredNodes){
-			System.out.println("Sending to "+regedNode.getHostRegPort());
-			System.out.println(establishedConnections.get(regedNode.getHostRegPort()));
+			//System.out.println("Sending to "+regedNode.getHostRegPort());
+			//System.out.println(establishedConnections.get(regedNode.getHostRegPort()));
 			establishedConnections.get(regedNode.getHostRegPort()).getSender().sendData(lw.getByte());
 		}
 	}

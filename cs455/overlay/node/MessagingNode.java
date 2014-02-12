@@ -140,12 +140,13 @@ public class MessagingNode implements Node {
 		while(!exit){
 			
 			String command = input.next();
-			System.out.println("Your Command: " + command +" does nothing!!");
+
 			switch(command){
 			case "print-shortest-path":
 				printShortestPath();
 				break;
 			case "exit-overlay":
+				System.out.println("Your Command: " + command +" does nothing!!");
 				exitOverlay();
 				break;
 				default:
@@ -162,29 +163,29 @@ public class MessagingNode implements Node {
 	}
 
 	private void printShortestPath() {
+		
 		Enumeration<String> enumKey = shortestPaths.keys();
 		while(enumKey.hasMoreElements()){
 			String targetName = enumKey.nextElement();
 			
 			ArrayList<String> path = shortestPaths.get(targetName);
 			if(Protocol.DEBUG){
-				System.out.println("target name: "+targetName);
-				System.out.println("path size: "+path.size());
+				//System.out.println("target name: "+targetName);
+				//System.out.println("path size: "+path.size());
 			}
 			if(path.size()>1){
 				//System.out.print(this.getHostServer());
 			}
-			
+
+
 			for(int i=0; i<path.size(); ++i){
 				System.out.print(path.get(i));
+				int weight = -1;
 				//if not last element
 				if(i+1 != path.size()){
-					int weight = -1;
+					
 					for(LinkInfo li: serverNametoLinkWeights.get(path.get(i))){
-						if(li.getHostBPortB().equals(path.get(i))){
-							weight = li.getWeight();
-						}
-						if(li.getHostAPortA().equals(path.get(i))){
+						if(li.getHostAPortA().equals(path.get(i)) && li.getHostBPortB().equals(path.get(i+1))){
 							//System.out.println("ERROR PRINT SHORTEST EVERYTHING IS BACKWARD");
 							weight = li.getWeight();
 							break;
@@ -206,7 +207,7 @@ public class MessagingNode implements Node {
 			ArrayList<String> shortestPath = Dijkstra.getShortestPath(overlayGraph, this.getHostServer(), name);
 			if(Protocol.DEBUG){
 				System.out.println("shortest path size: "+shortestPath.size());
-				System.out.println("name from graph: " + name);
+				//System.out.println("name from graph: " + name);
 			}
 			shortestPaths.put(name, shortestPath);
 				
@@ -223,6 +224,9 @@ public class MessagingNode implements Node {
 			ArrayList<String> neighbors = new ArrayList<String>();
 			Hashtable<String, LinkInfo> neighborWeights = new Hashtable<String, LinkInfo>(); 
 			getNeighborWeights(name, neighborWeights, neighbors);
+			for(String n: neighbors){
+				System.out.println("weight: "+neighborWeights.get(n).getWeight());
+			}
 			overlayGraph.add(new GraphNode(name,neighborWeights , neighbors));
 		}
 		return overlayGraph;
@@ -233,9 +237,6 @@ public class MessagingNode implements Node {
 			ArrayList<String> neighbors) {
 		ArrayList<LinkInfo> nodeNeighborInfo = serverNametoLinkWeights.get(name);
 		for(LinkInfo li: nodeNeighborInfo){
-			if(li.getHostAPortA().equals(name)){
-				System.out.println("get neighbor weights is the right direction");
-			}
 			neighborWeights.put(li.getHostBPortB(), li);
 			neighbors.add(li.getHostBPortB());
 		}
@@ -247,7 +248,7 @@ public class MessagingNode implements Node {
 		{
 			new Connection(this, socket);
 			mySockets.add(socket);
-			System.out.println("got Socket");
+			//System.out.println("got Socket");
 			System.out.println("port num "+socket.getLocalPort());
 			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), this.serverSocketPortNum, new String(this.hostName+":"+socket.getLocalPort()));
 			establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
@@ -306,7 +307,7 @@ public class MessagingNode implements Node {
 			String delims = ":| ";
 			String[] tokens = str.split(delims);
 			for(String s: tokens){
-				System.out.println("Token: "+s);
+			//	System.out.println("Token: "+s);
 			}
 			LinkInfo li = new LinkInfo(tokens[0], Integer.parseInt(tokens[1]), tokens[2], Integer.parseInt(tokens[3]), Integer.parseInt(tokens[4]));
 			if(Protocol.DEBUG){
@@ -328,7 +329,9 @@ public class MessagingNode implements Node {
 			 // Iterate through Hashtable entries
 			 while(it.hasNext()){
 				 String name = it.next();
-				 System.out.println(name+": "+serverNametoLinkWeights.get(name));
+				 for(LinkInfo li: serverNametoLinkWeights.get(name)){
+					 System.out.println(name+": "+li.getWeight());
+				 }
 			}
 		}
 		calculateShortestPaths();
@@ -380,7 +383,7 @@ public class MessagingNode implements Node {
 			String peerHostName = tokens[0];
 			int peerPortNum = Integer.parseInt(tokens[1]);
 			if(Protocol.DEBUG){
-				System.out.println("PeerHost:PeerPort= "+peerHostName+":"+peerPortNum);
+				//System.out.println("PeerHost:PeerPort= "+peerHostName+":"+peerPortNum);
 			}
 			try{
 				 Socket socket = new Socket(peerHostName, peerPortNum);
