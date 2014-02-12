@@ -23,6 +23,11 @@ public class Message implements Event {
 
 	}
 	
+	public Message(ArrayList<String> shortestPArg, int mesArg){
+		this.shortestPathIDs = new ArrayList<String>(shortestPArg);
+		message=mesArg;
+	}
+	
 	public ArrayList<String> getShortestPathIDs(){
 		return shortestPathIDs;
 	}

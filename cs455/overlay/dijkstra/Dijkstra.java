@@ -23,8 +23,9 @@ public class Dijkstra {
 			//System.out.println("target: "+targetString);
 		}
 		//TODO BE BETTER!!
-		String [] tokens = sourceString.split(":");
-		sourceString = tokens[0]+".cs.colostate.edu"+":"+tokens[1];
+		/*String [] tokens = sourceString.split(":");
+		
+		sourceString = tokens[0]+".cs.colostate.edu"+":"+tokens[1];*/
 		for(GraphNode node: graph){
 			//System.out.println("nodeID: "+node.getID());
 			if(node.getID().equals(sourceString)){

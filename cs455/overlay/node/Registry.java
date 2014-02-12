@@ -180,8 +180,12 @@ public class Registry implements Node {
 				}
 				break;
 			case "start":
-				System.out.println("Your Command: " + command +" does nothing!!");
-				start();
+				try {
+					start();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				break;
 			case "list-commands":
 				
@@ -199,9 +203,10 @@ public class Registry implements Node {
 		
 	}
 
-	private void start() {
-		// TODO Auto-generated method stub
-		
+	private void start() throws IOException {
+		for(nodeInformation node: registeredNodes){
+			establishedConnections.get(node.getHostRegPort()).getSender().sendData((new TaskInitiate()).getByte());
+		}		
 	}
 
 
