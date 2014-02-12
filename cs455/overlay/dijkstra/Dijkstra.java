@@ -16,7 +16,15 @@ public class Dijkstra {
 	public static ArrayList<String> getShortestPath(ArrayList<GraphNode> graph, String sourceString, String targetString){
 		GraphNode source = null;
 		GraphNode target = null;
+		if(Protocol.DEBUG){
+			System.out.println("size of graph: "+graph.size());
+			System.out.println("source: "+sourceString);
+			System.out.println("target: "+targetString);
+		}
+		String [] tokens = sourceString.split(":");
+		sourceString = tokens[0]+".cs.colostate.edu"+":"+tokens[1];
 		for(GraphNode node: graph){
+			System.out.println("nodeID: "+node.getID());
 			if(node.getID().equals(sourceString)){
 				source = node;
 			}
@@ -26,6 +34,8 @@ public class Dijkstra {
 		}
 		if(source == null || target == null){
 			System.out.println("ERROR: could not find target and/or source in graph");
+			System.out.println("source "+sourceString+" is null: " + (source==null));
+			System.out.println("target "+targetString+ " is null: "+(target==null));
 			return null;
 		}
 		
@@ -34,27 +44,32 @@ public class Dijkstra {
 		ArrayList<GraphNode> explored = new ArrayList<GraphNode>(graph.size());
 		graph.get(graph.indexOf(source)).setDistance(0);
 		for(GraphNode vertex:graph ){
-			if(!vertex.equals(source)){
+			if(!vertex.getID().equals(source.getID())){
 				//as close to infinity as I'm getting
+				
 				vertex.setDistance(Integer.MAX_VALUE);
 				vertex.setPrevious(null);
 			}
 			PQ.add(vertex);
+			System.out.println("adding node: "+vertex.getID());
 		}
 		
 		while(!PQ.isEmpty()){
 			//extract min
 			GraphNode vertex = PQ.remove();
 			//at target, done
-			if(vertex.equals(target)){
+			/*if(vertex.equals(target)){
 				break;
-			}
+			}*/
 			//keep track of those we've relaxed
 			if(Protocol.DEBUG){
 				System.out.println("pulled vertex distance: " + vertex.getDistance());
-				System.out.println("next vertex's distance: " + PQ.peek().getDistance());
-				if(vertex.getDistance() > PQ.peek().getDistance()){
-					System.out.println("Priority Queue Extract Min not right!");
+				if(!PQ.isEmpty()){
+					System.out.println("next vertex's distance: " + PQ.peek().getDistance());
+				
+					if(vertex.getDistance() > PQ.peek().getDistance()){
+						System.out.println("Priority Queue Extract Min not right!");
+					}
 				}
 			}
 			Hashtable<String, LinkInfo> vertexNeighborWeights = vertex.getNeighborWeights();
@@ -68,7 +83,7 @@ public class Dijkstra {
 				}
 				//neighbor hasn't been removed from priority queue
 				if(!explored.contains(neighborN)){
-					int alt = vertex.getDistance() + vertexNeighborWeights.get(neighborN).getWeight(); 
+					int alt = vertex.getDistance() + vertexNeighborWeights.get(neighborN.getID()).getWeight(); 
 					if(alt < neighborN.getDistance()){
 						if(Protocol.DEBUG){
 							System.out.println("needs to be relaxed");
@@ -76,8 +91,10 @@ public class Dijkstra {
 						neighborN.setDistance(alt);
 						neighborN.setPrevious(vertex);
 						//decrease priority by removing from PQ and reinserting
-						Iterator<GraphNode> iter = PQ.iterator();
+						PriorityQueue<GraphNode> PQTemp = new PriorityQueue<GraphNode>(PQ);
+						Iterator<GraphNode> iter = PQTemp.iterator();
 						while(iter.hasNext()){
+							//GraphNode nxt = iter.next();
 							if((iter.next()).equals(neighborN)){
 								PQ.remove(iter);
 								PQ.add(neighborN);
@@ -97,6 +114,7 @@ public class Dijkstra {
 			shortestPath.add(0, currentNode.getID());
 			currentNode = currentNode.getPrevious();
 		}
+		shortestPath.add(0, source.getID());
 		return shortestPath;
 	}
 }

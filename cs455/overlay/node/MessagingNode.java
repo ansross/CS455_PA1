@@ -45,7 +45,7 @@ public class MessagingNode implements Node {
 	private TCPServerThread server;
 	
 	public void setServerSocketPortNum(int portArg){
-		this. serverSocketPortNum=portArg;
+		this.serverSocketPortNum=portArg;
 	}
 	
 	public String getHostServer(){
@@ -70,6 +70,7 @@ public class MessagingNode implements Node {
 	}
 	
 	public MessagingNode(){
+		shortestPaths = new Hashtable<String, ArrayList<String>>(); 
 		serverNameToSocketName = new Hashtable<String, String>();
 		mySockets = new ArrayList<Socket>();
 		establishedConnections = new Hashtable<String, Connection>();
@@ -164,7 +165,16 @@ public class MessagingNode implements Node {
 		Enumeration<String> enumKey = shortestPaths.keys();
 		while(enumKey.hasMoreElements()){
 			String targetName = enumKey.nextElement();
+			
 			ArrayList<String> path = shortestPaths.get(targetName);
+			if(Protocol.DEBUG){
+				System.out.println("target name: "+targetName);
+				System.out.println("path size: "+path.size());
+			}
+			if(path.size()>1){
+				//System.out.print(this.getHostServer());
+			}
+			
 			for(int i=0; i<path.size(); ++i){
 				System.out.print(path.get(i));
 				//if not last element
@@ -175,7 +185,8 @@ public class MessagingNode implements Node {
 							weight = li.getWeight();
 						}
 						if(li.getHostAPortA().equals(path.get(i))){
-							System.out.println("ERROR PRINT SHORTEST EVERYTHING IS BACKWARD");
+							//System.out.println("ERROR PRINT SHORTEST EVERYTHING IS BACKWARD");
+							weight = li.getWeight();
 							break;
 						}
 					}
@@ -192,8 +203,13 @@ public class MessagingNode implements Node {
 		Enumeration<String> enumKey = serverNametoLinkWeights.keys();
 		while(enumKey.hasMoreElements()){
 			String name = enumKey.nextElement();
-			shortestPaths.put(name, Dijkstra.getShortestPath(overlayGraph, this.hostName+":"+this.serverSocketPortNum,
-					name));
+			ArrayList<String> shortestPath = Dijkstra.getShortestPath(overlayGraph, this.getHostServer(), name);
+			if(Protocol.DEBUG){
+				System.out.println("shortest path size: "+shortestPath.size());
+				System.out.println("name from graph: " + name);
+			}
+			shortestPaths.put(name, shortestPath);
+				
 			
 		}
 	}
@@ -301,19 +317,24 @@ public class MessagingNode implements Node {
 			}
 			else{
 				serverNametoLinkWeights.put(li.getHostAPortA(), new ArrayList<LinkInfo>());
+				serverNametoLinkWeights.get(li.getHostAPortA()).add(li);
 			}
 		}
 		if(Protocol.DEBUG){
 			System.out.println("Link weights: ");
-			 Set<Entry<String, ArrayList<LinkInfo>>> entrySet = serverNametoLinkWeights.entrySet();
+			 Set<String> keySet = serverNametoLinkWeights.keySet();
 			 // Obtain an Iterator for the entries Set
-			 Iterator<Entry<String, ArrayList<LinkInfo>>> it = entrySet.iterator();
+			 Iterator<String> it = keySet.iterator();
 			 // Iterate through Hashtable entries
 			 while(it.hasNext()){
-				 System.out.println(it.next());
+				 String name = it.next();
+				 System.out.println(name+": "+serverNametoLinkWeights.get(name));
 			}
 		}
 		calculateShortestPaths();
+		if(Protocol.DEBUG){
+			System.out.println("shortest paths calculated");
+		}
 		// TODO Auto-generated method stub
 		
 	}
