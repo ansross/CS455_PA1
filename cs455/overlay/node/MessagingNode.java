@@ -4,13 +4,17 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 
 import util.Utilities;
+import cs455.overlay.dijkstra.Dijkstra;
+import cs455.overlay.dijkstra.GraphNode;
 import cs455.overlay.transport.*;
 import cs455.overlay.wireformats.*;
 import cs455.overlay.transport.TCPServerThread;
@@ -24,7 +28,10 @@ public class MessagingNode implements Node {
 	private ArrayList<Socket> mySockets;
 	private Hashtable<String, String> serverNameToSocketName;
 	//initialized when link weights received 
-	private Hashtable<String, LinkInfo> serverNametoLinkWeights;
+	private Hashtable<String, ArrayList<LinkInfo>> serverNametoLinkWeights;
+	
+	//store shortest path to each node in the overlay
+	private Hashtable<String, ArrayList<String>> shortestPaths;
 	
 	private String IPAddress;
 	private int portNum;
@@ -45,6 +52,13 @@ public class MessagingNode implements Node {
 		return hostName+":"+serverSocketPortNum;
 	}
 	
+	public ArrayList<String> getNeighbors(){
+		ArrayList<String> neighbors = new ArrayList<String>();
+		for(Socket socket: mySockets){
+			neighbors.add(establishedConnections.get(Utilities.createKeyFromSocket(socket)).getNameFromServerSocket());
+		}
+		return neighbors;
+	}
 	//private TCPSender sender;
 	
 	public String getIPAddress(){
@@ -147,8 +161,68 @@ public class MessagingNode implements Node {
 	}
 
 	private void printShortestPath() {
-		// TODO Auto-generated method stub
+		Enumeration<String> enumKey = shortestPaths.keys();
+		while(enumKey.hasMoreElements()){
+			String targetName = enumKey.nextElement();
+			ArrayList<String> path = shortestPaths.get(targetName);
+			for(int i=0; i<path.size(); ++i){
+				System.out.print(path.get(i));
+				//if not last element
+				if(i+1 != path.size()){
+					int weight = -1;
+					for(LinkInfo li: serverNametoLinkWeights.get(path.get(i))){
+						if(li.getHostBPortB().equals(path.get(i))){
+							weight = li.getWeight();
+						}
+						if(li.getHostAPortA().equals(path.get(i))){
+							System.out.println("ERROR PRINT SHORTEST EVERYTHING IS BACKWARD");
+							break;
+						}
+					}
+					System.out.print("--"+weight+"--");
+				}
+			}
+			System.out.print('\n');
+		}
 		
+	}
+	
+	private void calculateShortestPaths(){
+		ArrayList<GraphNode> overlayGraph = makeGraph();
+		Enumeration<String> enumKey = serverNametoLinkWeights.keys();
+		while(enumKey.hasMoreElements()){
+			String name = enumKey.nextElement();
+			shortestPaths.put(name, Dijkstra.getShortestPath(overlayGraph, this.hostName+":"+this.serverSocketPortNum,
+					name));
+			
+		}
+	}
+	
+	private ArrayList<GraphNode> makeGraph(){
+		ArrayList<GraphNode> overlayGraph = new ArrayList<GraphNode>();
+		//make a node for each node in overlay
+		Enumeration<String> enumKey = serverNametoLinkWeights.keys();
+		while(enumKey.hasMoreElements()){
+			String name = enumKey.nextElement();
+			ArrayList<String> neighbors = new ArrayList<String>();
+			Hashtable<String, LinkInfo> neighborWeights = new Hashtable<String, LinkInfo>(); 
+			getNeighborWeights(name, neighborWeights, neighbors);
+			overlayGraph.add(new GraphNode(name,neighborWeights , neighbors));
+		}
+		return overlayGraph;
+		
+	}
+
+	private void getNeighborWeights(String name, Hashtable<String, LinkInfo> neighborWeights,
+			ArrayList<String> neighbors) {
+		ArrayList<LinkInfo> nodeNeighborInfo = serverNametoLinkWeights.get(name);
+		for(LinkInfo li: nodeNeighborInfo){
+			if(li.getHostAPortA().equals(name)){
+				System.out.println("get neighbor weights is the right direction");
+			}
+			neighborWeights.put(li.getHostBPortB(), li);
+			neighbors.add(li.getHostBPortB());
+		}
 	}
 
 	private void attemptRegistration(Socket socket){//
@@ -211,7 +285,7 @@ public class MessagingNode implements Node {
 	
 	private void saveLinkInfo(LinkWeights event) {
 		ArrayList<String> links = event.getLinks();
-		serverNametoLinkWeights = new Hashtable<String, LinkInfo>(links.size());
+		serverNametoLinkWeights = new Hashtable<String, ArrayList<LinkInfo>>(links.size());
 		for(String str: links){
 			String delims = ":| ";
 			String[] tokens = str.split(delims);
@@ -222,18 +296,24 @@ public class MessagingNode implements Node {
 			if(Protocol.DEBUG){
 				System.out.println("added link: "+li.getHostBPortB());
 			}
-			serverNametoLinkWeights.put(li.getHostBPortB(), li);
+			if(serverNametoLinkWeights.containsKey(li.getHostAPortA())){
+				serverNametoLinkWeights.get(li.getHostAPortA()).add(li);
+			}
+			else{
+				serverNametoLinkWeights.put(li.getHostAPortA(), new ArrayList<LinkInfo>());
+			}
 		}
 		if(Protocol.DEBUG){
 			System.out.println("Link weights: ");
-			 Set entrySet = serverNametoLinkWeights.entrySet();
+			 Set<Entry<String, ArrayList<LinkInfo>>> entrySet = serverNametoLinkWeights.entrySet();
 			 // Obtain an Iterator for the entries Set
-			 Iterator it = entrySet.iterator();
+			 Iterator<Entry<String, ArrayList<LinkInfo>>> it = entrySet.iterator();
 			 // Iterate through Hashtable entries
 			 while(it.hasNext()){
 				 System.out.println(it.next());
 			}
 		}
+		calculateShortestPaths();
 		// TODO Auto-generated method stub
 		
 	}

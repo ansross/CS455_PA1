@@ -15,6 +15,10 @@ public class LinkInfo {
 		return hostB+":"+hostBServerPortNum;
 	}
 	
+	public String getHostAPortA(){
+		return hostA+":"+hostAServerPortNum;
+	}
+	
 	public void setWeight(int weight){
 		if(weight < 0 || weight > 10){
 			System.out.println("ERROR: WEIGHT " + weight + " OUT OF BOUNDS");

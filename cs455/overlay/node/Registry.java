@@ -13,6 +13,7 @@ import java.util.Set;
 
 import util.ResultSetter;
 import util.Utilities;
+import cs455.overlay.dijkstra.GraphNode;
 import cs455.overlay.transport.Connection;
 import cs455.overlay.transport.TCPSender;
 import cs455.overlay.transport.TCPServerThread;
@@ -47,6 +48,8 @@ public class Registry implements Node {
 		new TCPServerThread(this, portNum).start();
 		
 	}
+	
+	
 	
 	public void setServerThread(TCPServerThread arg){
 		this.server = arg;
@@ -169,7 +172,6 @@ public class Registry implements Node {
 				setupOverlay(numberOfConnections);
 				break;
 			case "send-overlay-link-weights":
-				System.out.println("Your Command: " + command +" does nothing!!");
 				try {
 					sendOverlayLinkWeights();
 				} catch (IOException e) {
@@ -239,6 +241,42 @@ public class Registry implements Node {
 			}
 		}
 	}
+	/*
+	private ArrayList<GraphNode> makeGraph(){
+		ArrayList<GraphNode> graph = new ArrayList<GraphNode>();
+		//make every node into a graphNode
+		for(nodeInformation node: registeredNodes){
+			GraphNode gnode = null;
+			for(GraphNode n: graph){
+				if(n.getID().equals(node.getHostServerPort())){
+					gnode=n;
+				}
+				else{
+					gnode = new GraphNode(node.getHostServerPort());
+				}
+			}
+			for(LinkInfo li: overlay.get(node.getHostServerPort())){
+				GraphNode neighborGNode = null;
+				for(GraphNode n: graph){
+					if(n.getID().equals(node.getHostServerPort())){
+						neighborGNode=n;
+					}
+					else{
+						neighborGNode = new GraphNode(li.getHostBPortB());
+					}
+				}
+				if(neighborGNode==null || gnode == null){
+					System.out.println("Error in makeGraph ");
+					return null;
+				}
+				gnode.addNeighborWithWeight(neighborGNode, li);
+				
+			}
+			graph.add(gnode);
+		}
+		return graph;
+		
+	}*/
 	
 	private void createOverlay(int numConnections){
 		new Hashtable<String, ArrayList<nodeInformation>>(registeredNodes.size());

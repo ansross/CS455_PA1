@@ -17,6 +17,10 @@ public class Connection {
 		nameFromServerSocket= nameArg;
 	}
 	
+	public String getNameFromServerSocket(){
+		return nameFromServerSocket;
+	}
+	
 	public Connection(Node node, Socket socket) throws IOException{
 		
 		this.nameFromSocket = Utilities.createKeyFromSocket(socket);
