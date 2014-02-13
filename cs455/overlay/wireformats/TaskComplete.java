@@ -10,8 +10,9 @@ import java.io.IOException;
 
 public class TaskComplete implements Event {
 	private int type = Protocol.TASK_COMPLETE;
-	private String nodeIPAddress;
-	private int nodePortNum;
+	private String nodeHostServerName;
+	//private String nodeIPAddress;
+	//private int nodePortNum;
 	
 	@Override
 	public int getType() {
@@ -19,10 +20,14 @@ public class TaskComplete implements Event {
 		// TODO Auto-generated method stub
 
 	}
-	
+	/*
 	public TaskComplete(String IPAddresArg, int portNumArg){
-		this.nodeIPAddress=IPAddresArg;
-		this.nodePortNum = portNumArg;
+		//this.nodeIPAddress=IPAddresArg;
+		//this.nodePortNum = portNumArg;
+	}*/
+	
+	public TaskComplete(String nodeNameArg){
+		this.nodeHostServerName = nodeNameArg;
 	}
 	
 	public TaskComplete(byte[] marshalledBytes) throws IOException{
@@ -37,12 +42,10 @@ public class TaskComplete implements Event {
 			System.out.println("ERROR: types do not match. Actual type: "+type+", passed type: "+msgType);
 		}
 		
-		int IPLength = din.readInt();
-		byte [] IPBytes = new byte[IPLength];
-		din.readFully(IPBytes);
-		this.nodeIPAddress = new String(IPBytes);
-	
-		this.nodePortNum = din.readInt();
+		int IDLength = din.readInt();
+		byte [] IDBytes = new byte[IDLength];
+		din.readFully(IDBytes);
+		this.nodeHostServerName = new String(IDBytes);
 		
 		baInStr.close();
 		din.close();
@@ -57,12 +60,10 @@ public class TaskComplete implements Event {
 		
 		dout.writeInt(type);
 		
-		byte[] nodeIPAddBytes = nodeIPAddress.getBytes();
-		int elementLength = nodeIPAddBytes.length;
+		byte[] nodeIDBytes = nodeHostServerName.getBytes();
+		int elementLength = nodeIDBytes.length;
 		dout.writeInt(elementLength);
-		dout.write(nodeIPAddBytes);
-		
-		dout.writeLong(nodePortNum);
+		dout.write(nodeIDBytes);
 		
 		dout.flush();
 		marshalledBytes = baOutputStream.toByteArray();

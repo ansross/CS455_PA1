@@ -11,4 +11,5 @@ public interface Node {
 	public void onEvent(Event event, Socket socket);
 	public void getCommandlineInput();
 	public void setServerSocketPortNum(int localPort);
+	public String getHostServerName();
 }

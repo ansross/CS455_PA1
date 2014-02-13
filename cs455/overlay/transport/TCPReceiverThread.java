@@ -1,5 +1,6 @@
 package cs455.overlay.transport;
 
+import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -7,6 +8,7 @@ import java.net.Socket;
 import java.net.SocketException;
 
 import util.ResultSetter;
+import util.Utilities;
 import cs455.overlay.node.Node;
 import cs455.overlay.wireformats.Event;
 import cs455.overlay.wireformats.EventFactory;
@@ -25,7 +27,7 @@ public class TCPReceiverThread extends Thread{
 	public TCPReceiverThread(Node node, Socket socket) throws IOException{
 		System.out.println("Reciever thread made");
 		this.socket = socket;
-		din = new DataInputStream(socket.getInputStream());
+		din = new DataInputStream( new BufferedInputStream(socket.getInputStream()));
 		this.myNode = node;
 	}
 	
@@ -37,16 +39,25 @@ public class TCPReceiverThread extends Thread{
 				//System.out.println("listening");
 				dataLength = din.readInt();
 				//System.out.println("read DataLength");
-				
+				//System.out.println("dataLength: "+dataLength);
 				byte[] data = new byte[dataLength];
+				//System.out.println("data is null 1: "+(data==null));
 				//System.out.println("1");
 				din.readFully(data, 0, dataLength);
+				//System.out.println("data is null 2: "+(data==null));
 				//System.out.println("2");
 				//System.out.println("2.5");
-				Event event = EventFactory.getEvent(data);
+				if(dataLength>0){
+					Event event = EventFactory.getEvent(data);
 				//System.out.println("3");
 				//System.out.println("event in TCPreceiver: "+(event==null));
-				myNode.onEvent(event, socket);				
+					if(event != null){
+						myNode.onEvent(event, socket);
+					}
+					else{
+						System.out.println("MESSAGE DROPPED from : " +myNode.getHostServerName()+" to " + Utilities.createKeyFromSocket(socket));
+					}
+				}
 			}catch(EOFException eof){
 				System.out.println("EOF Exception");
 				System.out.println(eof.getMessage());

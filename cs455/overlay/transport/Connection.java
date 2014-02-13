@@ -33,7 +33,7 @@ public class Connection {
 		
 	}
 	
-	public TCPSender getSender(){
+	public synchronized TCPSender getSender(){
 		return sender;
 	}
 	

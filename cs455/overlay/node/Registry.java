@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import util.ResultSetter;
 import util.Utilities;
@@ -38,6 +41,13 @@ public class Registry implements Node {
 	int serverSocketPortNum;
 	private TCPServerThread server;
 	
+	
+	//initialized when start since won't be sending completes until then
+	private Lock taskCompRecLock = new ReentrantLock();
+	private int taskCompletesReceived;
+	//initialzed when request summaries
+	private Lock numSumRecLock = new ReentrantLock();
+	ArrayList<TaskSummaryResponse> receivedSummaries;
 	public Registry(int portNum){
 		//numLinks = 0;
 		//overlay initilized in setup overlay call
@@ -46,6 +56,7 @@ public class Registry implements Node {
 		establishedConnections = new Hashtable<String, Connection>();
 		registeredNodes = new ArrayList<nodeInformation>();
 		new TCPServerThread(this, portNum).start();
+		receivedSummaries = new ArrayList<TaskSummaryResponse>();
 		
 	}
 	
@@ -80,12 +91,12 @@ public class Registry implements Node {
 
 
 	@Override
-	public void onEvent(Event event, Socket socket) {
+	public synchronized void onEvent(Event event, Socket socket) {
 		switch(event.getType()){
 		case Protocol.DEREGISTER:
 			break;
 		case Protocol.REGISTER_REQUEST:
-			System.out.println("Recieved request");
+			//System.out.println("Recieved request");
 			try {
 				
 				byte registrationSuccess = attemptRegistration((RegisterRequest)event, socket);
@@ -95,13 +106,76 @@ public class Registry implements Node {
 			}
 			break;
 		case Protocol.TASK_COMPLETE:
+			try{
+				taskCompRecLock.lock();
+				taskCompletesReceived++;
+				//System.out.println("Recieved taskComplete. Now have: "+taskCompletesReceived);
+				//System.out.println("Witing for: "+registeredNodes.size());
+				if(taskCompletesReceived == registeredNodes.size()){
+					try {
+						requestSummaries();
+						System.out.println("Requested Summaries");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}finally{
+				taskCompRecLock.unlock();
+			}
+			
 			break;
 		case Protocol.TASK_SUMMARY_RESPONSE:
+			try{
+				numSumRecLock.lock();
+				receivedSummaries.add((TaskSummaryResponse) event);
+				System.out.println("Recieved summary response. Now have: "+receivedSummaries.size()+
+					". Need: "+registeredNodes.size());
+				if(receivedSummaries.size() == registeredNodes.size()){
+					parseSummaries();
+				}
+			}
+			finally{
+				numSumRecLock.unlock();
+			}
 			break;
 		}
 		// TODO Auto-generated method stub
 
 	}
+
+	private void parseSummaries() {
+		long totalSumSent = 0;
+		int totalNumSent = 0;
+		long totalSumRec = 0;
+		int totalNumRec = 0;
+		
+		for(TaskSummaryResponse tsi: receivedSummaries){
+			totalSumSent += tsi.getSumSent();
+			totalNumSent += tsi. getNumSent();
+			totalSumRec += tsi.getSumRec();
+			totalNumRec += tsi.getNumRec();
+		}
+		
+		System.out.print("Sum Sent: "+totalSumSent+'\n'
+				+ "Sum Rec:  "+totalSumRec+'\n'
+				+ "Num Sent: " + totalNumSent +'\n'
+				+ "Num Rec:  "+ totalNumRec +'\n');
+		// TODO Auto-generated method stub
+		
+	}
+
+
+
+	private void requestSummaries() throws IOException {
+		for(nodeInformation node: registeredNodes){
+			establishedConnections.get(node.getHostRegPort()).getSender().sendData((new TaskSummaryRequest()).getByte());
+		}
+		// TODO Auto-generated method stub
+		
+	}
+
+
 
 	//if a node with the same port and IPAddress is already registered, registry fails 
 	//else, node is registered
@@ -138,14 +212,14 @@ public class Registry implements Node {
 	}
 
 	@Override
-	public void registerConnection(Connection connection){
+	public synchronized void registerConnection(Connection connection){
 		establishedConnections.put(connection.getName(), connection);
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void deregisterConnection(Connection connection) {
+	public synchronized void deregisterConnection(Connection connection) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -204,6 +278,7 @@ public class Registry implements Node {
 	}
 
 	private void start() throws IOException {
+		taskCompletesReceived = 0;
 		for(nodeInformation node: registeredNodes){
 			establishedConnections.get(node.getHostRegPort()).getSender().sendData((new TaskInitiate()).getByte());
 		}		
@@ -313,7 +388,7 @@ public class Registry implements Node {
 				}
 			}
 		}
-		System.out.println("num links after overlay creation: " + numLinks);
+		//System.out.println("num links after overlay creation: " + numLinks);
 
 	}
 
@@ -344,9 +419,9 @@ public class Registry implements Node {
 			}
 		}
 		if(Protocol.DEBUG){
-			System.out.println("link info strings:" );
+			//System.out.println("link info strings:" );
 			for(String s: linkInfoString){
-				System.out.println(s);
+				//System.out.println(s);
 			}
 			//System.out.println("in send list weights numLinks: "+numLinks);
 		}
@@ -394,6 +469,20 @@ public class Registry implements Node {
 		serverSocketPortNum=localPort;
 		// TODO Auto-generated method stub
 		
+	}
+
+
+
+	@Override
+	public String getHostServerName() {
+		// TODO Auto-generated method stub
+		try {
+			return InetAddress.getLocalHost().getHostName()+":"+this.serverSocketPortNum;
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 

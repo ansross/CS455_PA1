@@ -10,13 +10,24 @@ import java.io.IOException;
 
 public class TaskSummaryResponse implements Event {
 	private int type=Protocol.TASK_SUMMARY_RESPONSE;
-	private String nodeIPAddress;
-	private int nodePortNum;
+	//private String nodeIPAddress;
+	//private int nodePortNum;
+	private String nodeName;
 	private int numSent;
 	private long sumSent;
 	private int numReceived;
 	private long sumReceived;
 	private int numRelayed;
+	
+	public TaskSummaryResponse(String nameArg, int numSentArg, long sumSentArg,
+			int numRecArg, long sumRecArg, int numRelayedArg){
+		this.nodeName=nameArg;
+		this.numSent = numSentArg;
+		this.sumSent = sumSentArg;
+		this.numReceived = numRecArg;
+		this.sumReceived = sumRecArg;
+		this.numRelayed = numRelayedArg;
+	}
 	
 	@Override
 	public int getType() {
@@ -24,6 +35,23 @@ public class TaskSummaryResponse implements Event {
 		// TODO Auto-generated method stub
 
 	}
+	
+	public int getNumSent(){
+		return numSent;
+	}
+	
+	public int getNumRec(){
+		return numReceived;
+	}
+	
+	public long getSumSent(){
+		return sumSent;
+	}
+	
+	public long getSumRec(){
+		return sumReceived;
+	}
+	
 	
 	public TaskSummaryResponse(byte[] marshalledBytes) throws IOException{
 		ByteArrayInputStream baInStr = 
@@ -37,12 +65,12 @@ public class TaskSummaryResponse implements Event {
 			System.out.println("ERROR: types do not match. Actual type: "+type+", passed type: "+msgType);
 		}
 		
-		int IPLength = din.readInt();
-		byte [] IPBytes = new byte[IPLength];
-		din.readFully(IPBytes);
-		this.nodeIPAddress = new String(IPBytes);
+		int nameLength = din.readInt();
+		byte [] nameBytes = new byte[nameLength];
+		din.readFully(nameBytes);
+		this.nodeName = new String(nameBytes);
 		
-		this.nodePortNum = din.readInt();
+		//this.nodePortNum = din.readInt();
 		this.numSent=din.readInt();
 		this.sumSent=din.readLong();
 		this.numReceived = din.readInt();
@@ -61,12 +89,12 @@ public class TaskSummaryResponse implements Event {
 
 		dout.writeInt(type);
 		
-		byte[] nodeIPAddBytes = nodeIPAddress.getBytes();
-		int elementLength = nodeIPAddBytes.length;
+		byte[] nodeNameBytes = nodeName.getBytes();
+		int elementLength = nodeNameBytes.length;
 		dout.writeInt(elementLength);
-		dout.write(nodeIPAddBytes);
+		dout.write(nodeNameBytes);
 		
-		dout.writeInt(nodePortNum);
+		//dout.writeInt(nodePortNum);
 		dout.writeInt(numSent);
 		dout.writeLong(sumSent);
 		dout.writeInt(numReceived);

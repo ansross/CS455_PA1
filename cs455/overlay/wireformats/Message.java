@@ -36,32 +36,72 @@ public class Message implements Event {
 		return message;
 	}
 	
-	public Message(byte[] marshalledBytes) throws IOException{
+	public Message(byte[] marshalledBytes) {//TODO RETURN TO THROWING throws IOException{
 		ByteArrayInputStream baInStr = 
 				new ByteArrayInputStream(marshalledBytes);
 		DataInputStream din = 
 				new DataInputStream(new BufferedInputStream(baInStr));
 		
 		//type
-		int msgType = din.readInt();
+		int msgType=-999;
+		try {
+			msgType = din.readInt();
+		} catch (IOException e) {
+			System.out.println("failed at msgType");
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		if(msgType != type){
 			System.out.println("ERROR: types do not match. Actual type: "+type+", passed type: "+msgType);
 		}
 		
-		int numPaths = din.readInt(); 
+		int numPaths=-99;
+		try {
+			numPaths = din.readInt();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			System.out.println("failed at numPaths");
+			e.printStackTrace();
+		} 
 		
 		shortestPathIDs = new ArrayList<String>(numPaths);
 		for(int i=0; i<numPaths; ++i){
-			int IDLength = din.readInt();
+			int IDLength=0;
+			try {
+				IDLength = din.readInt();
+			} catch (IOException e) {
+				System.out.println("failed at readInt");
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			byte [] IDBytes = new byte[IDLength];
-			din.readFully(IDBytes);
+			try {
+				din.readFully(IDBytes);
+			} catch (IOException e) {
+				System.out.println("failed at readfully ");
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			shortestPathIDs.add(new String(IDBytes));
 		}
 		
-		message = din.readInt();
+		try {
+			message = din.readInt();
+		} catch (IOException e) {
+			System.out.println("failed at message");
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	
-		baInStr.close();
-		din.close();
+		try {
+			baInStr.close();
+			din.close();
+		} catch (IOException e) {
+			System.out.println("failed at end");
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 	@Override
@@ -69,6 +109,7 @@ public class Message implements Event {
 		byte[] marshalledBytes=null;
 		ByteArrayOutputStream baOutputStream = new ByteArrayOutputStream();
 		DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
+		
 		dout.writeInt(type);
 		
 		//write number of nodes in shortest path

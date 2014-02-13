@@ -18,11 +18,24 @@ public class EventFactory {
 	public static Event getEvent(byte[] marshalledBytes)throws IOException{
 		Event retEvent = null;
 		
+		//System.out.println("marshalled bytes size: "+marshalledBytes.length);
+		
 		ByteArrayInputStream baInputStream =
 				new ByteArrayInputStream(marshalledBytes);
 		DataInputStream din = 
 				new DataInputStream(new BufferedInputStream(baInputStream));
-		int type = din.readInt();
+		
+		
+		
+		int type=-1;
+		try {
+			type = din.readInt();
+		} catch (IOException e) {
+			System.out.println(e.getCause());
+			System.out.println(e.getMessage());
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		baInputStream.close();
 		din.close();
 		switch(type){

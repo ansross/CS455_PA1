@@ -15,7 +15,7 @@ public class Protocol {
 	public static final int TASK_SUMMARY_REQUEST = 2008;
 	public static final int TASK_SUMMARY_RESPONSE = 2009;
 	
-	public static final int NUM_ROUNDS = 25;
+	public static final int NUM_ROUNDS = 500;
 	
 	//header 
 	

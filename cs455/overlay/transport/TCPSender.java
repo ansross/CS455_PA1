@@ -13,10 +13,15 @@ public class TCPSender {
 		dout = new DataOutputStream(socket.getOutputStream());
 	}
 	
-	public void sendData(byte[] dataToSend) throws IOException{
-	try{	int dataLength = dataToSend.length;
+	public synchronized void sendData(byte[] dataToSend) throws IOException{
+	try{
+		System.out.println("send point 1");
+		int dataLength = dataToSend.length;
+		System.out.println("send point 1.1");
 		dout.writeInt(dataLength);
+		System.out.println("send point 1.2");
 		dout.write(dataToSend, 0, dataLength);
+		System.out.println("send point 1.3");
 		dout.flush();}catch(IOException ioe){
 			System.out.println("Sender IOE");
 			ioe.printStackTrace();
