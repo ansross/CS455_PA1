@@ -198,7 +198,7 @@ public class MessagingNode implements Node {
 			parseRegResponse((RegisterResponse) event);
 			break;
 		case Protocol.LINK_WEIGHTS:
-			System.out.println("Recieved link weights");
+			//System.out.println("Recieved link weights");
 			saveLinkInfo((LinkWeights) event);
 			break;
 		case Protocol.MESSAGE:
@@ -214,7 +214,7 @@ public class MessagingNode implements Node {
 		case Protocol.MESSAGING_NODES_LIST:
 			//System.out.println("got messaging nodes list");
 			System.out.println("My name is: "+hostName+":"+serverSocketPortNum);
-			System.out.println("I have "+((MessagingNodesList) event).getNumPeerNodes()+" peer nodes");
+			//System.out.println("I have "+((MessagingNodesList) event).getNumPeerNodes()+" peer nodes");
 			((MessagingNodesList) event).printPeerNodes();
 			setUpOverlay((MessagingNodesList)event);
 			break;
@@ -314,14 +314,13 @@ public class MessagingNode implements Node {
 
 
 			for(int i=0; i<path.size(); ++i){
-				System.out.print(path.get(i));
+				System.out.print(Utilities.removeDotCS(path.get(i)));
 				int weight = -1;
 				//if not last element
 				if(i+1 != path.size()){
 					
 					for(LinkInfo li: serverNametoLinkWeights.get(path.get(i))){
 						if(li.getHostAPortA().equals(path.get(i)) && li.getHostBPortB().equals(path.get(i+1))){
-							//System.out.println("ERROR PRINT SHORTEST EVERYTHING IS BACKWARD");
 							weight = li.getWeight();
 							break;
 						}
@@ -331,7 +330,7 @@ public class MessagingNode implements Node {
 			}
 			System.out.print('\n');
 		}
-		System.out.println("Shortest paths size in print: "+shortestPaths.size());
+		//System.out.println("Shortest paths size in print: "+shortestPaths.size());
 		
 	}
 	
@@ -490,7 +489,6 @@ public class MessagingNode implements Node {
 		if(Protocol.DEBUG){
 			//System.out.println("sent message: "+message);
 		}
-		System.out.println(Thread.currentThread().getName()+" released lock");
 	}
 	//when receive message
 	private void parseMessage(Message msg) throws IOException{
@@ -508,9 +506,7 @@ public class MessagingNode implements Node {
 	
 	private void keepMessage(Message msg){
 		//System.out.println("Kept message from " + msg.getShortestPathIDs().get(0));
-		System.out.println("got message 3.1");
-		numMessagesRecieved++;//.dddAndGet(1);
-		System.out.println("got message 3.2");
+		numMessagesRecieved++;
 		this.sumMessagesRecieved += msg.getMessage();
 	}
 	

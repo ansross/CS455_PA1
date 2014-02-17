@@ -23,7 +23,6 @@ public class MessagingNodesList implements Event {
 	public MessagingNodesList(long numPeersArg, ArrayList<String> nodeNamesArg){
 		this.numPeerNodes = numPeersArg;
 		nodeNames = new ArrayList<String>(nodeNamesArg);
-		System.out.println("Type ="+type);
 	}
 	
 	public MessagingNodesList(byte[] marshalledBytes) throws IOException{

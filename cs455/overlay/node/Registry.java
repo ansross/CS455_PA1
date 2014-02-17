@@ -81,7 +81,7 @@ public class Registry implements Node {
 		Registry reg = new Registry(portNum);
 		//reg.setServerThread(new TCPServerThread(reg));
 		//reg.getServerThread().start();
-		System.out.println("Server thread started");
+		//System.out.println("Server thread started");
 		while(true){
 			reg.getCommandlineInput();
 		}
@@ -151,23 +151,26 @@ public class Registry implements Node {
 		int totalNumRec = 0;
 		
 		//print header
-		System.out.println(" Node Name     |Num Messages Send |Num Received | Sum of Sent Messages  |  Sum of Received Messages | Num Relayed  ");
+		System.out.printf("%-20s | %-15s | %-20s | %-20s | %-20s | %-20s |\n",
+				"Node Name", "Num Msgs Sent", "Num Msgs Received", 
+				"Sum of Sent Msgs","Sum of Received Msgs","Num Msgs Relayed");
 		
-		
+		String horizontalLine ="";
+		for(int i =0; i<132; ++i){
+			horizontalLine+="-";
+		}
+		System.out.println(horizontalLine);
 		for(TaskSummaryResponse tsi: receivedSummaries){
 			totalSumSent += tsi.getSumSent();
 			totalNumSent += tsi. getNumSent();
 			totalSumRec += tsi.getSumRec();
 			totalNumRec += tsi.getNumRec();
-			System.out.println(tsi.getName()+" | "+tsi.getNumSent() +" | "
-			+tsi.getNumRec()+" | " + tsi.getSumSent() + " | "+tsi.getSumRec() 
-			+" | " +tsi.getNumRelayed());
+			System.out.printf("%-20s | %15d | %20d | % 20d | % 20d | %-20d |\n", Utilities.removeDotCS(tsi.getName()), tsi.getNumSent(),
+			tsi.getNumRec(), tsi.getSumSent(),tsi.getSumRec(),tsi.getNumRelayed());
 		}
-		
-		System.out.print("Total | "+totalSumSent
-				+ " | "+totalSumRec
-				+ " | " + totalNumSent 
-				+ " | "+ totalNumRec +'\n');
+		System.out.println(horizontalLine);
+		System.out.printf("%-20s | %15d | %20d | % 20d | % 20d | %-20s |\n", "Total ",
+		totalNumSent, totalNumRec, totalSumSent, totalSumRec, "");
 		// TODO Auto-generated method stub
 		
 	}
@@ -208,11 +211,11 @@ public class Registry implements Node {
 			
 		}
 		
-		//System.out.println("Response Message: "+message);
+		System.out.println(message);
 		//System.out.println("From Registration: "+Utilities.createKeyFromSocket(socket));
 		TCPSender sender = establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender();
 		sender.sendData(new RegisterResponse(success, message).getByte());
-		System.out.println("Sent response");
+		//System.out.println("Sent response");
 
 		
 		return success;
@@ -297,6 +300,7 @@ public class Registry implements Node {
 		//TODO CHANGE BACK
 		//if(numberOfConnections!=4){
 			//System.out.println("SYSTEM DOES NOT SUPPORT NUMBER OF CONNECTIONS != 4");
+		//	System.out.println("please retry setting up overlay with 10 nodes and 4 connections");
 		//}
 		//else
 		{
@@ -328,42 +332,6 @@ public class Registry implements Node {
 			}
 		}
 	}
-	/*
-	private ArrayList<GraphNode> makeGraph(){
-		ArrayList<GraphNode> graph = new ArrayList<GraphNode>();
-		//make every node into a graphNode
-		for(nodeInformation node: registeredNodes){
-			GraphNode gnode = null;
-			for(GraphNode n: graph){
-				if(n.getID().equals(node.getHostServerPort())){
-					gnode=n;
-				}
-				else{
-					gnode = new GraphNode(node.getHostServerPort());
-				}
-			}
-			for(LinkInfo li: overlay.get(node.getHostServerPort())){
-				GraphNode neighborGNode = null;
-				for(GraphNode n: graph){
-					if(n.getID().equals(node.getHostServerPort())){
-						neighborGNode=n;
-					}
-					else{
-						neighborGNode = new GraphNode(li.getHostBPortB());
-					}
-				}
-				if(neighborGNode==null || gnode == null){
-					System.out.println("Error in makeGraph ");
-					return null;
-				}
-				gnode.addNeighborWithWeight(neighborGNode, li);
-				
-			}
-			graph.add(gnode);
-		}
-		return graph;
-		
-	}*/
 	
 	private void createOverlay(int numConnections){
 		new Hashtable<String, ArrayList<nodeInformation>>(registeredNodes.size());

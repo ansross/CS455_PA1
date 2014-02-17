@@ -24,7 +24,7 @@ public class Connection {
 	public Connection(Node node, Socket socket) throws IOException{
 		
 		this.nameFromSocket = Utilities.createKeyFromSocket(socket);
-		System.out.println("Connection name: "+Utilities.createKeyFromSocket(socket));
+		//System.out.println("Connection name: "+Utilities.createKeyFromSocket(socket));
 		this.node = node;
 		this.receiver = new TCPReceiverThread(node, socket);
 		receiver.start();

@@ -17,7 +17,6 @@ public class RegisterRequest implements Event {
 	public RegisterRequest(String IPAddArg, int portNumArg, String idArg){
 		IPAddress = IPAddArg;
 		serverPortNum = portNumArg;
-		System.out.println("Port Num " + serverPortNum);
 		AssignedID = idArg;
 	}
 	
@@ -94,7 +93,6 @@ public class RegisterRequest implements Event {
 		//ID
 		byte[] IDBytes = AssignedID.getBytes();
 		elementLength = IDBytes.length;
-		System.out.println("IdBytes length "+elementLength);
 		dout.writeInt(elementLength);
 		dout.write(IDBytes);
 		

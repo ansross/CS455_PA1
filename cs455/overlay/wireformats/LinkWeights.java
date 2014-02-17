@@ -21,7 +21,6 @@ public class LinkWeights implements Event {
 	}
 	
 	public LinkWeights(long numLinksArg, ArrayList<String> linkArg){
-		System.out.println("lw ctor: "+numLinksArg);
 		numOfLinks = numLinksArg;
 		links = new ArrayList<String>();
 		for(String s: linkArg){
@@ -90,8 +89,6 @@ public class LinkWeights implements Event {
 		DataOutputStream dout = new DataOutputStream(new BufferedOutputStream(baOutputStream));
 
 		dout.writeInt(type);
-		
-		System.out.println("in get bytes: "+numOfLinks);
 		dout.writeLong(numOfLinks);
 		
 		if(Protocol.DEBUG){
