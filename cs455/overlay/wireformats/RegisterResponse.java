@@ -10,7 +10,7 @@ import java.io.IOException;
 
 public class RegisterResponse implements Event {
 	private int type = Protocol.REGISTER_RESPONSE;
-	private byte statusCode; //Sucess or Failure
+	private byte statusCode; ////success==1 is successful, ==0 is unsuccessful
 	private String additionalInfo;
 	
 
@@ -19,6 +19,10 @@ public class RegisterResponse implements Event {
 		return type;
 		// TODO Auto-generated method stub
 
+	}
+	
+	public boolean isSuccess(){
+		return statusCode==1;
 	}
 	
 	public String getAdditionalInfo(){

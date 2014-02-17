@@ -45,7 +45,7 @@ public class TCPServerThread extends Thread{
 					new Connection(myNode, socket);
 					sockets.add(socket);
 					//new TCPReceiverThread(myNode,socket).start();
-					System.out.println("\n Number of sockets: "+sockets.size());
+					//System.out.println("\n Number of sockets: "+sockets.size());
 				}
 		} catch (IOException e){
 			System.out.println("Exception caught when trying to listen on port or"

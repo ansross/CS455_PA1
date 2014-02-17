@@ -36,6 +36,13 @@ public class TaskSummaryResponse implements Event {
 
 	}
 	
+	public String getName(){
+		return nodeName;
+	}
+	
+	public int getNumRelayed(){
+		return numRelayed;
+	}
 	public int getNumSent(){
 		return numSent;
 	}

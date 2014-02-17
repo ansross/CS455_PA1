@@ -22,25 +22,22 @@ public class RoundThread extends Thread {
 		for(int round = 0; round < Protocol.NUM_ROUNDS; ++round){
 			String roundTarget = otherNodes.get(rand.nextInt(otherNodes.size()));
 		
-			//if(round%100==0){
-				System.out.println("Thread "+this.getName()+" On round: "+round+" sending to: "+roundTarget);
-			//}
+			if(round%100==0){
+				System.out.println(" On round: "+round);
+			}
 			for(int msg = 0; msg < 5; ++msg){
-
 				//System.out.println(	Thread.currentThread().getName()+ "on msg: "+msg);
 				try {
 					sourceNode.sendMessage(roundTarget);
-					System.out.println("sent message");
+					//System.out.println("sent message");
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				sourceNode.incrementNumMessagesSent();
-				System.out.println("incremented num sent ");
 			}
 			//sleep to allow time to receive 
 			try {
-				sleep(500);
+				sleep(50);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -54,7 +51,6 @@ public class RoundThread extends Thread {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		sourceNode.decrementRoundRun();
 		try {
 			sourceNode.sendCompletionNotification();
 			System.out.println("Sent completion");

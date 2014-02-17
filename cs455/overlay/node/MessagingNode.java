@@ -41,10 +41,12 @@ public class MessagingNode implements Node {
 	private String IPAddress;
 	private int portNum;
 	//private Lock numSentLock = new ReentrantLock();
-	private AtomicInteger numMessagesSent;
+	//private AtomicInteger numMessagesSent;
+	private int numMessagesSent; 
 	private long sumMessagesSent;
 	//private Lock numRecLock = new ReentrantLock();
-	private AtomicInteger numMessagesRecieved;
+	//private AtomicInteger 
+	private int numMessagesRecieved;
 	private long sumMessagesRecieved;
 	private int numMessagesRelayed;
 	private String hostName;
@@ -66,10 +68,10 @@ public class MessagingNode implements Node {
 		serverNameToSocketName = new Hashtable<String, String>();
 		mySockets = new ArrayList<Socket>();
 		establishedConnections = new Hashtable<String, Connection>();
-		numMessagesSent = new AtomicInteger(0);
+		numMessagesSent = 0;//new AtomicInteger(0);
 		sumMessagesSent =0;
 		
-		numMessagesRecieved = new AtomicInteger(0);
+		numMessagesRecieved = 0;//new AtomicInteger(0);
 		sumMessagesRecieved = 0;
 		numMessagesRelayed =0;
 		try {
@@ -192,12 +194,15 @@ public class MessagingNode implements Node {
 	@Override
 	public synchronized void onEvent(Event event, Socket socket) {
 		switch(event.getType()){
+		case Protocol.REGISTER_RESPONSE:
+			parseRegResponse((RegisterResponse) event);
+			break;
 		case Protocol.LINK_WEIGHTS:
 			System.out.println("Recieved link weights");
 			saveLinkInfo((LinkWeights) event);
 			break;
 		case Protocol.MESSAGE:
-			System.out.println("Got message");
+			//System.out.println("Got message");
 			//System.out.println("Got message: "+((Message) event).getMessage());
 			try {
 				parseMessage((Message) event);
@@ -216,13 +221,13 @@ public class MessagingNode implements Node {
 			//recieved "register request" from peer nodes connecting to it with their server socket number
 			//for identificaiton purposes
 		case Protocol.REGISTER_REQUEST:
-			System.out.println("got response");
+			//System.out.println("got response");
 			registerPeerNode((RegisterRequest)event, socket);
 			break;
 		case Protocol.TASK_INITIATE:
 			try {
 				System.out.println("Starting task");
-				completeTask();
+				startTask();
 				//sendCompletionNotification();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -234,7 +239,7 @@ public class MessagingNode implements Node {
 			
 			break;
 		case Protocol.TASK_SUMMARY_REQUEST:
-			System.out.println("Recieved summary request");
+			//System.out.println("Recieved summary request");
 			try {
 				respondWithSummary();
 			} catch (IOException e) {
@@ -249,7 +254,10 @@ public class MessagingNode implements Node {
 
 	}
 	
-	/** Registration_Response***/
+
+
+
+	/** Registration_Request***/
 	private void attemptRegistration(String registryHostName, int registryPortNum){//
 		this.registryPortServerName = registryHostName+":"+registryPortNum;
 		try	
@@ -257,10 +265,10 @@ public class MessagingNode implements Node {
 			Connection regConnection = new Connection(this, socket);
 			mySockets.add(socket);
 			//System.out.println("got Socket");
-			System.out.println("port num "+socket.getLocalPort());
+			//System.out.println("port num "+socket.getLocalPort());
 			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), this.serverSocketPortNum, new String(this.hostName+":"+socket.getLocalPort()));
 			establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
-			System.out.println("Request Sent");
+			//System.out.println("Request Sent");
 			
 		}catch(IOException e){
 			System.out.println("IOExecption Message Node");
@@ -333,6 +341,18 @@ public class MessagingNode implements Node {
 	}
 	/********************* MESSAGE RESPONSES ************/
 	
+	/*** Register_Response ***/
+	private void parseRegResponse(RegisterResponse event) {
+		String status = "";
+		if(event.isSuccess()){
+			status = "succeeded";
+		}
+		else{
+			status = "failed";
+		}
+		System.out.println("Registration "+status+". "+event.getAdditionalInfo());
+		
+	}
 	
 	/*** Link_Weights ***/
 	
@@ -430,71 +450,30 @@ public class MessagingNode implements Node {
 	private void respondWithSummary() throws IOException{
 		//create 
 		TaskSummaryResponse tsi = new TaskSummaryResponse(getHostServerName(),
-				this.numMessagesSent.get(), this.sumMessagesSent, 
-				this.numMessagesRecieved.get(), this.sumMessagesRecieved,
+				this.numMessagesSent, this.sumMessagesSent, 
+				this.numMessagesRecieved, this.sumMessagesRecieved,
 				this.numMessagesRelayed);
 		//send
 		establishedConnections.get(registryPortServerName).getSender().sendData(tsi.getByte());	
-		System.out.println("Send summary response");
+		//System.out.println("Send summary response");
 	}
 
 	/***Task_Initiate -> Task_Complete ***/
 	
-	private void completeTask() throws IOException, InterruptedException{
-		//5000 rounds
-		//each round send 5 messages to same nde 
-		Random rand = new Random();
-//		ArrayList<RoundThread> rounds = new ArrayList<RoundThread>(Protocol.NUM_ROUNDS);
-		//to wait for all to be done before sending complete
-		numRoundsRunning = new AtomicInteger(0);
-		//System.out.println("other targets size: "+otherNodes.size());
-		//for(int round = 0; round < Protocol.NUM_ROUNDS; ++round){
-			//System.out.println("round: "+round);
-		//	String roundTarget = otherNodes.get(rand.nextInt(otherNodes.size()));
-			RoundThread rt = new RoundThread(this);
-			//rounds.add(rt);
-			//try{
-				//numRoundsLock.lock();
-				
-				numRoundsRunning.addAndGet(1);
-				//System.out.println("LOCKED and numRoundsRunning: "+numRoundsRunning);
-			//}finally{
-				//numRoundsLock.unlock();
-				//System.out.println("completed UNLOCKED");
-		//	}
-			rt.start();
-			//Thread.currentThread().sleep(5);
-		//}
-		//boolean allDone = false;
-		//busy wait until no more rounds are running
-		//while(!allDone){
-			//try{
-				//numRoundsLock.lock();
-			//	allDone = (numRoundsRunning.get() == 0);
-			//}finally{
-				//numRoundsLock.unlock();
-			//}
-		//}
+	private void startTask() throws IOException, InterruptedException{
+		RoundThread rt = new RoundThread(this);
+		rt.start();
 	}
 	
-	public void decrementRoundRun(){
-		//try{
-			//numRoundsLock.lock();
-			//System.out.println("decrement LOCKED");
-			numRoundsRunning.addAndGet(-1);
-		//}finally{
-			//numRoundsLock.unlock();
-			//System.out.println("decrement UNLOCKED");
-		//}
+	public void decrementRoundRun(){;
+		numRoundsRunning.addAndGet(-1);
 	}
 	
 	//sendMessage from this node to targetNode through shortest path 
 	public void sendMessage(String targetNode) throws IOException{
-		//sendMsgLock.lock();
-		System.out.println(Thread.currentThread().getName()+" has lock");
 		Random rand = new Random();
 		int message = rand.nextInt();
-
+		numMessagesSent++;
 		Message msg = new Message(shortestPaths.get(targetNode), message);
 		//the first node in the shortest path is this current node
 		if(Protocol.DEBUG){
@@ -505,86 +484,64 @@ public class MessagingNode implements Node {
 				System.out.println("target "+targetNode);
 			}
 		}
-		System.out.println("point 1");
 		TCPSender sender = establishedConnections.get(shortestPaths.get(targetNode).get(1)).getSender();
-		System.out.println("point 1.5");
 		sender.sendData(msg.getByte());
-		System.out.println("point 2");
 		this.sumMessagesSent+=message;
-		System.out.println("point 3");
 		if(Protocol.DEBUG){
 			//System.out.println("sent message: "+message);
 		}
-		//sendMsgLock.unlock();
 		System.out.println(Thread.currentThread().getName()+" released lock");
 	}
 	//when receive message
 	private void parseMessage(Message msg) throws IOException{
-		System.out.println("got message 1");
-		System.out.flush();
 		ArrayList<String> shortestPathIDs = msg.getShortestPathIDs();
-		System.out.println("got message 2");
-		System.out.flush();
 		if(shortestPathIDs.get(shortestPathIDs.size()-1).equals(this.getHostServerName())){
 			if(Protocol.DEBUG){
 			//	System.out.println("kept message with msg: " + msg.getMessage());
 			}
-			System.out.println("got message 3");
-		System.out.flush();
 			keepMessage(msg);
 		}
 		else{
-			System.out.println("got message 4");
-			System.out.flush();
 			relayMessage(msg);
 		}
-		System.out.println("got message 5");
-		System.out.flush();
-		
 	}
 	
 	private void keepMessage(Message msg){
 		//System.out.println("Kept message from " + msg.getShortestPathIDs().get(0));
-		//try{
-			//numRecLock.lock();
 		System.out.println("got message 3.1");
-			numMessagesRecieved.addAndGet(1);
-			System.out.println("got message 3.2");
-			this.sumMessagesRecieved += msg.getMessage();
-		//}finally{
-			//numRecLock.unlock();
-		//}
-
+		numMessagesRecieved++;//.dddAndGet(1);
+		System.out.println("got message 3.2");
+		this.sumMessagesRecieved += msg.getMessage();
 	}
 	
 	private void relayMessage(Message msg) throws IOException{
-		System.out.println("got message 4.1");
+		//System.out.println("got message 4.1");
 		numMessagesRelayed++;
-		System.out.println("got message 4.2");
+		//System.out.println("got message 4.2");
 		ArrayList<String> shortestPathIDs = msg.getShortestPathIDs();
 		int i;
 		for(i=0; i<shortestPathIDs.size()-1; ++i){
-			System.out.println("got message 4.3");
+			//System.out.println("got message 4.3");
 			//System.out.println(shortestPathIDs.get(i)+" equal? " +this.getHostServerName());
 			if(shortestPathIDs.get(i).equals(this.getHostServerName())){
-				System.out.println("got message 4.4");
 				String destinationName = shortestPathIDs.get(i+1);
 				String destinationLocalName = serverNameToSocketName.get(destinationName);
 				establishedConnections.get(destinationLocalName).getSender().sendData(msg.getByte());
-				System.out.println("got message 4.5");
 				break;
 			}
 		}
-		System.out.println("got message 4.6");
 		if(i==shortestPathIDs.size()-1)
 			System.out.println("ERROR: OH MY GOODNESS I'M NOT ON THE LIST!!!!!");
 		
 	}
 	
+
+	public void incrementNumMessagesSent() {
+		numMessagesSent++;
+	}
+	
 	public void sendCompletionNotification() throws IOException {
 		establishedConnections.get(registryPortServerName).getSender().sendData((new TaskComplete(this.getHostServerName()).getByte()));
-		System.out.println("send completion notification");
-		// TODO Auto-generated method stub
 		
 	}
 	
@@ -614,17 +571,10 @@ public class MessagingNode implements Node {
 				serverNameToSocketName.put(peerHostName+":"+peerPortNum, Utilities.createKeyFromSocket(socket));
 				RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), socket.getLocalPort(), new String(this.hostName+":"+socket.getLocalPort()));
 				establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
-				System.out.println("Connected");
 			}catch(IOException ioe){
 				ioe.printStackTrace();
-			}
-			 
-			//connect
-			
-			
+			}			
 		}
-		// TODO Auto-generated method stub
-		
 	}
 	
 	public String messageNodeInfo(){
@@ -644,17 +594,6 @@ public class MessagingNode implements Node {
 		
 	}
 
-	public void incrementNumMessagesSent() {
-		//try{
-		//	numSentLock.lock();
-			numMessagesSent.addAndGet(1);
-		//}finally{
-		//	numSentLock.unlock();
-		//}
-		// TODO Auto-generated method stub
-		
-	}
-	
 	
 
 }

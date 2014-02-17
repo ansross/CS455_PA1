@@ -127,16 +127,16 @@ public class Registry implements Node {
 			break;
 		case Protocol.TASK_SUMMARY_RESPONSE:
 			try{
-				numSumRecLock.lock();
+				//numSumRecLock.lock();
 				receivedSummaries.add((TaskSummaryResponse) event);
-				System.out.println("Recieved summary response. Now have: "+receivedSummaries.size()+
-					". Need: "+registeredNodes.size());
+				//System.out.println("Recieved summary response. Now have: "+receivedSummaries.size()+
+				//	". Need: "+registeredNodes.size());
 				if(receivedSummaries.size() == registeredNodes.size()){
 					parseSummaries();
 				}
 			}
 			finally{
-				numSumRecLock.unlock();
+				//numSumRecLock.unlock();
 			}
 			break;
 		}
@@ -150,17 +150,24 @@ public class Registry implements Node {
 		long totalSumRec = 0;
 		int totalNumRec = 0;
 		
+		//print header
+		System.out.println(" Node Name     |Num Messages Send |Num Received | Sum of Sent Messages  |  Sum of Received Messages | Num Relayed  ");
+		
+		
 		for(TaskSummaryResponse tsi: receivedSummaries){
 			totalSumSent += tsi.getSumSent();
 			totalNumSent += tsi. getNumSent();
 			totalSumRec += tsi.getSumRec();
 			totalNumRec += tsi.getNumRec();
+			System.out.println(tsi.getName()+" | "+tsi.getNumSent() +" | "
+			+tsi.getNumRec()+" | " + tsi.getSumSent() + " | "+tsi.getSumRec() 
+			+" | " +tsi.getNumRelayed());
 		}
 		
-		System.out.print("Sum Sent: "+totalSumSent+'\n'
-				+ "Sum Rec:  "+totalSumRec+'\n'
-				+ "Num Sent: " + totalNumSent +'\n'
-				+ "Num Rec:  "+ totalNumRec +'\n');
+		System.out.print("Total | "+totalSumSent
+				+ " | "+totalSumRec
+				+ " | " + totalNumSent 
+				+ " | "+ totalNumRec +'\n');
 		// TODO Auto-generated method stub
 		
 	}
