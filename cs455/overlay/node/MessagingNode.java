@@ -57,6 +57,38 @@ public class MessagingNode implements Node {
 	//Lock numRoundsLock = new ReentrantLock();
 	private AtomicInteger numRoundsRunning;
 	
+	
+	/******************** CTOR ****************************/
+	
+	public MessagingNode(){
+		otherNodes = new ArrayList<String>();
+		shortestPaths = new Hashtable<String, ArrayList<String>>(); 
+		serverNameToSocketName = new Hashtable<String, String>();
+		mySockets = new ArrayList<Socket>();
+		establishedConnections = new Hashtable<String, Connection>();
+		numMessagesSent = new AtomicInteger(0);
+		sumMessagesSent =0;
+		
+		numMessagesRecieved = new AtomicInteger(0);
+		sumMessagesRecieved = 0;
+		numMessagesRelayed =0;
+		try {
+			hostName = addDotCS(InetAddress.getLocalHost().getHostName());
+			//System.out.println("Host Name: " + hostName);
+			new TCPServerThread(this).start();
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
+		
+	}
+	
+	
+	/******************* GETTERS AND SETTERS **************/
+	
+	
 	public ArrayList<String> getOtherNodes(){
 		return otherNodes;
 	}
@@ -86,30 +118,6 @@ public class MessagingNode implements Node {
 		return portNum;
 	}
 	
-	public MessagingNode(){
-		otherNodes = new ArrayList<String>();
-		shortestPaths = new Hashtable<String, ArrayList<String>>(); 
-		serverNameToSocketName = new Hashtable<String, String>();
-		mySockets = new ArrayList<Socket>();
-		establishedConnections = new Hashtable<String, Connection>();
-		numMessagesSent = new AtomicInteger(0);
-		sumMessagesSent =0;
-		
-		numMessagesRecieved = new AtomicInteger(0);
-		sumMessagesRecieved = 0;
-		numMessagesRelayed =0;
-		try {
-			hostName = addDotCS(InetAddress.getLocalHost().getHostName());
-			//System.out.println("Host Name: " + hostName);
-			new TCPServerThread(this).start();
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-		
-		
-	}
 	
 	public void setServerThread(TCPServerThread arg){
 		this.server = arg;
@@ -119,6 +127,8 @@ public class MessagingNode implements Node {
 		return server;
 	}
 	
+	
+	/********************* MAIN ****************************/
 	public static void main(String[] args) throws IOException{
 		if(args.length != 2){
 			System.err.println("Usage: "
@@ -179,6 +189,87 @@ public class MessagingNode implements Node {
 		
 	}
 	
+	@Override
+	public synchronized void onEvent(Event event, Socket socket) {
+		switch(event.getType()){
+		case Protocol.LINK_WEIGHTS:
+			System.out.println("Recieved link weights");
+			saveLinkInfo((LinkWeights) event);
+			break;
+		case Protocol.MESSAGE:
+			System.out.println("Got message");
+			//System.out.println("Got message: "+((Message) event).getMessage());
+			try {
+				parseMessage((Message) event);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		case Protocol.MESSAGING_NODES_LIST:
+			//System.out.println("got messaging nodes list");
+			System.out.println("My name is: "+hostName+":"+serverSocketPortNum);
+			System.out.println("I have "+((MessagingNodesList) event).getNumPeerNodes()+" peer nodes");
+			((MessagingNodesList) event).printPeerNodes();
+			setUpOverlay((MessagingNodesList)event);
+			break;
+			//recieved "register request" from peer nodes connecting to it with their server socket number
+			//for identificaiton purposes
+		case Protocol.REGISTER_REQUEST:
+			System.out.println("got response");
+			registerPeerNode((RegisterRequest)event, socket);
+			break;
+		case Protocol.TASK_INITIATE:
+			try {
+				System.out.println("Starting task");
+				completeTask();
+				//sendCompletionNotification();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			break;
+		case Protocol.TASK_SUMMARY_REQUEST:
+			System.out.println("Recieved summary request");
+			try {
+				respondWithSummary();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		case Protocol.TASK_SUMMARY_RESPONSE:
+			break;
+		}
+		// TODO Auto-generated method stub
+
+	}
+	
+	/** Registration_Response***/
+	private void attemptRegistration(String registryHostName, int registryPortNum){//
+		this.registryPortServerName = registryHostName+":"+registryPortNum;
+		try	
+		{	Socket socket = new Socket(registryHostName, registryPortNum);
+			Connection regConnection = new Connection(this, socket);
+			mySockets.add(socket);
+			//System.out.println("got Socket");
+			System.out.println("port num "+socket.getLocalPort());
+			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), this.serverSocketPortNum, new String(this.hostName+":"+socket.getLocalPort()));
+			establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
+			System.out.println("Request Sent");
+			
+		}catch(IOException e){
+			System.out.println("IOExecption Message Node");
+					System.out.println(e);
+		}
+	}
+	
+	
+	/********************** UTIL **************************/
 	private void printStats() {
 		System.out.println("numSent: "+this.numMessagesSent+'\n'
 				+ "sumSent: "+this.sumMessagesSent +'\n'
@@ -189,18 +280,15 @@ public class MessagingNode implements Node {
 		
 	}
 
-	
-	
+	//to alter between the host name returning with .cs.colostate.edu and without that
 	private String addDotCS(String host){
 		//String [] tokens = word.split(":");
 		return host+".cs.colostate.edu";
 	}
 	
-	private void exitOverlay() {
-		// TODO Auto-generated method stub
-		
-	}
 
+
+	/********************* COMMAND LINE FUNCTIONS ********/
 	private void printShortestPath() {
 		
 		Enumeration<String> enumKey = shortestPaths.keys();
@@ -239,221 +327,14 @@ public class MessagingNode implements Node {
 		
 	}
 	
-	private void calculateShortestPaths(){
-		ArrayList<GraphNode> overlayGraph = makeGraph();
-		//Enumeration<String> enumKey = serverNametoLinkWeights.keys();
-		for(String name: otherNodes){
-		//while(enumKey.hasMoreElements()){
-			//String name = enumKey.nextElement();
-			ArrayList<String> shortestPath = Dijkstra.getShortestPath(overlayGraph, this.getHostServerName(), name);
-			if(Protocol.DEBUG){
-				//System.out.println("shortest path size: "+shortestPath.size());
-				//System.out.println("name from graph: " + name);
-			}
-			shortestPaths.put(name, shortestPath);
-			
-		}
-	}
-	
-	private ArrayList<GraphNode> makeGraph(){
-		ArrayList<GraphNode> overlayGraph = new ArrayList<GraphNode>();
-		//make a node for each node in overlay
-		Enumeration<String> enumKey = serverNametoLinkWeights.keys();
-		while(enumKey.hasMoreElements()){
-			String name = enumKey.nextElement();
-			ArrayList<String> neighbors = new ArrayList<String>();
-			Hashtable<String, LinkInfo> neighborWeights = new Hashtable<String, LinkInfo>(); 
-			getNeighborWeights(name, neighborWeights, neighbors);
-			for(String n: neighbors){
-				//System.out.println("weight: "+neighborWeights.get(n).getWeight());
-			}
-			overlayGraph.add(new GraphNode(name,neighborWeights , neighbors));
-		}
-		return overlayGraph;
-		
-	}
-
-	private void getNeighborWeights(String name, Hashtable<String, LinkInfo> neighborWeights,
-			ArrayList<String> neighbors) {
-		ArrayList<LinkInfo> nodeNeighborInfo = serverNametoLinkWeights.get(name);
-		for(LinkInfo li: nodeNeighborInfo){
-			neighborWeights.put(li.getHostBPortB(), li);
-			neighbors.add(li.getHostBPortB());
-		}
-	}
-
-	private void attemptRegistration(String registryHostName, int registryPortNum){//
-		this.registryPortServerName = registryHostName+":"+registryPortNum;
-		try	
-		{	Socket socket = new Socket(registryHostName, registryPortNum);
-			Connection regConnection = new Connection(this, socket);
-			mySockets.add(socket);
-			//System.out.println("got Socket");
-			System.out.println("port num "+socket.getLocalPort());
-			RegisterRequest regReq = new RegisterRequest(InetAddress.getLocalHost().getHostName(), this.serverSocketPortNum, new String(this.hostName+":"+socket.getLocalPort()));
-			establishedConnections.get(Utilities.createKeyFromSocket(socket)).getSender().sendData(regReq.getByte());
-			System.out.println("Request Sent");
-			
-		}catch(IOException e){
-			System.out.println("IOExecption Message Node");
-					System.out.println(e);
-		}
-	}
-	
-	
-
-	@Override
-	public synchronized void onEvent(Event event, Socket socket) {
-		switch(event.getType()){
-		case Protocol.LINK_WEIGHTS:
-			System.out.println("Recieved link weights");
-			saveLinkInfo((LinkWeights) event);
-			break;
-		case Protocol.MESSAGE:
-			//System.out.println("Got message: "+((Message) event).getMessage());
-			try {
-				parseMessage((Message) event);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			break;
-		case Protocol.MESSAGING_NODES_LIST:
-			//System.out.println("got messaging nodes list");
-			System.out.println("My name is: "+hostName+":"+serverSocketPortNum);
-			System.out.println("I have "+((MessagingNodesList) event).getNumPeerNodes()+" peer nodes");
-			((MessagingNodesList) event).printPeerNodes();
-			setUpOverlay((MessagingNodesList)event);
-			break;
-		case Protocol.REGISTER_REQUEST:
-			System.out.println("got response");
-			registerPeerNode((RegisterRequest)event, socket);
-			break;
-		case Protocol.TASK_INITIATE:
-			try {
-				System.out.println("Starting task");
-				completeTask();
-				sendCompletionNotification();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			
-			break;
-		case Protocol.TASK_SUMMARY_REQUEST:
-			System.out.println("Recieved summary request");
-			try {
-				respondWithSummary();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			break;
-		case Protocol.TASK_SUMMARY_RESPONSE:
-			break;
-		}
-		// TODO Auto-generated method stub
-
-	}
-	
-	private void respondWithSummary() throws IOException{
-		//create 
-		TaskSummaryResponse tsi = new TaskSummaryResponse(getHostServerName(),
-				this.numMessagesSent.get(), this.sumMessagesSent, 
-				this.numMessagesRecieved.get(), this.sumMessagesRecieved,
-				this.numMessagesRelayed);
-		//send
-		establishedConnections.get(registryPortServerName).getSender().sendData(tsi.getByte());	
-		System.out.println("Send summary response");
-	}
-
-	private void sendCompletionNotification() throws IOException {
-		establishedConnections.get(registryPortServerName).getSender().sendData((new TaskComplete(this.getHostServerName()).getByte()));
-		System.out.println("send completion notification");
+	private void exitOverlay() {
 		// TODO Auto-generated method stub
 		
 	}
-
-	private void completeTask() throws IOException, InterruptedException{
-		//5000 rounds
-		//each round send 5 messages to same nde 
-		Random rand = new Random();
-//		ArrayList<RoundThread> rounds = new ArrayList<RoundThread>(Protocol.NUM_ROUNDS);
-		//to wait for all to be done before sending complete
-		numRoundsRunning = new AtomicInteger(0);
-		//System.out.println("other targets size: "+otherNodes.size());
-		//for(int round = 0; round < Protocol.NUM_ROUNDS; ++round){
-			//System.out.println("round: "+round);
-		//	String roundTarget = otherNodes.get(rand.nextInt(otherNodes.size()));
-			RoundThread rt = new RoundThread(this);
-			//rounds.add(rt);
-			//try{
-				//numRoundsLock.lock();
-				
-				numRoundsRunning.addAndGet(1);
-				//System.out.println("LOCKED and numRoundsRunning: "+numRoundsRunning);
-			//}finally{
-				//numRoundsLock.unlock();
-				//System.out.println("completed UNLOCKED");
-		//	}
-			rt.start();
-			//Thread.currentThread().sleep(5);
-		//}
-		boolean allDone = false;
-		//busy wait until no more rounds are running
-		while(!allDone){
-			//try{
-				//numRoundsLock.lock();
-				allDone = (numRoundsRunning.get() == 0);
-			//}finally{
-				//numRoundsLock.unlock();
-			//}
-		}
-	}
+	/********************* MESSAGE RESPONSES ************/
 	
-	public void decrementRoundRun(){
-		//try{
-			//numRoundsLock.lock();
-			//System.out.println("decrement LOCKED");
-			numRoundsRunning.addAndGet(-1);
-		//}finally{
-			//numRoundsLock.unlock();
-			//System.out.println("decrement UNLOCKED");
-		//}
-	}
 	
-	public void sendMessage(String targetNode) throws IOException{
-		sendMsgLock.lock();
-		System.out.println(Thread.currentThread().getName()+" has lock");
-		Random rand = new Random();
-		int message = rand.nextInt();
-
-		Message msg = new Message(shortestPaths.get(targetNode), message);
-		//the first node in the shortest path is this current node
-		if(Protocol.DEBUG){
-			if(shortestPaths.get(targetNode).size()>1){
-				//System.out.println("sending to "+shortestPaths.get(targetNode).get(1));
-			}else{
-				System.out.println("ERROR: ");
-				System.out.println("target "+targetNode);
-			}
-		}
-		System.out.println("point 1");
-		TCPSender sender = establishedConnections.get(shortestPaths.get(targetNode).get(1)).getSender();
-		System.out.println("point 1.5");
-		sender.sendData(msg.getByte());
-		System.out.println("point 2");
-		this.sumMessagesSent+=message;
-		System.out.println("point 3");
-		if(Protocol.DEBUG){
-			//System.out.println("sent message: "+message);
-		}
-		sendMsgLock.unlock();
-		System.out.println(Thread.currentThread().getName()+" released lock");
-	}
+	/*** Link_Weights ***/
 	
 	private void saveLinkInfo(LinkWeights event) {
 		ArrayList<String> links = event.getLinks();
@@ -501,17 +382,164 @@ public class MessagingNode implements Node {
 		
 	}
 
+	
+	private void calculateShortestPaths(){
+		ArrayList<GraphNode> overlayGraph = makeGraph();
+		//Enumeration<String> enumKey = serverNametoLinkWeights.keys();
+		for(String name: otherNodes){
+		//while(enumKey.hasMoreElements()){
+			//String name = enumKey.nextElement();
+			ArrayList<String> shortestPath = Dijkstra.getShortestPath(overlayGraph, this.getHostServerName(), name);
+			if(Protocol.DEBUG){
+				//System.out.println("shortest path size: "+shortestPath.size());
+				//System.out.println("name from graph: " + name);
+			}
+			shortestPaths.put(name, shortestPath);
+			
+		}
+	}
+	
+	private ArrayList<GraphNode> makeGraph(){
+		ArrayList<GraphNode> overlayGraph = new ArrayList<GraphNode>();
+		//make a node for each node in overlay
+		Enumeration<String> enumKey = serverNametoLinkWeights.keys();
+		while(enumKey.hasMoreElements()){
+			String name = enumKey.nextElement();
+			ArrayList<String> neighbors = new ArrayList<String>();
+			Hashtable<String, LinkInfo> neighborWeights = new Hashtable<String, LinkInfo>(); 
+			getNeighborWeights(name, neighborWeights, neighbors);
+			for(String n: neighbors){
+				//System.out.println("weight: "+neighborWeights.get(n).getWeight());
+			}
+			overlayGraph.add(new GraphNode(name,neighborWeights , neighbors));
+		}
+		return overlayGraph;
+		
+	}
+
+	private void getNeighborWeights(String name, Hashtable<String, LinkInfo> neighborWeights,
+			ArrayList<String> neighbors) {
+		ArrayList<LinkInfo> nodeNeighborInfo = serverNametoLinkWeights.get(name);
+		for(LinkInfo li: nodeNeighborInfo){
+			neighborWeights.put(li.getHostBPortB(), li);
+			neighbors.add(li.getHostBPortB());
+		}
+	}
+	
+	/***Task_Summary_Request -> Task_Summary_Response***/
+	private void respondWithSummary() throws IOException{
+		//create 
+		TaskSummaryResponse tsi = new TaskSummaryResponse(getHostServerName(),
+				this.numMessagesSent.get(), this.sumMessagesSent, 
+				this.numMessagesRecieved.get(), this.sumMessagesRecieved,
+				this.numMessagesRelayed);
+		//send
+		establishedConnections.get(registryPortServerName).getSender().sendData(tsi.getByte());	
+		System.out.println("Send summary response");
+	}
+
+	/***Task_Initiate -> Task_Complete ***/
+	
+	private void completeTask() throws IOException, InterruptedException{
+		//5000 rounds
+		//each round send 5 messages to same nde 
+		Random rand = new Random();
+//		ArrayList<RoundThread> rounds = new ArrayList<RoundThread>(Protocol.NUM_ROUNDS);
+		//to wait for all to be done before sending complete
+		numRoundsRunning = new AtomicInteger(0);
+		//System.out.println("other targets size: "+otherNodes.size());
+		//for(int round = 0; round < Protocol.NUM_ROUNDS; ++round){
+			//System.out.println("round: "+round);
+		//	String roundTarget = otherNodes.get(rand.nextInt(otherNodes.size()));
+			RoundThread rt = new RoundThread(this);
+			//rounds.add(rt);
+			//try{
+				//numRoundsLock.lock();
+				
+				numRoundsRunning.addAndGet(1);
+				//System.out.println("LOCKED and numRoundsRunning: "+numRoundsRunning);
+			//}finally{
+				//numRoundsLock.unlock();
+				//System.out.println("completed UNLOCKED");
+		//	}
+			rt.start();
+			//Thread.currentThread().sleep(5);
+		//}
+		//boolean allDone = false;
+		//busy wait until no more rounds are running
+		//while(!allDone){
+			//try{
+				//numRoundsLock.lock();
+			//	allDone = (numRoundsRunning.get() == 0);
+			//}finally{
+				//numRoundsLock.unlock();
+			//}
+		//}
+	}
+	
+	public void decrementRoundRun(){
+		//try{
+			//numRoundsLock.lock();
+			//System.out.println("decrement LOCKED");
+			numRoundsRunning.addAndGet(-1);
+		//}finally{
+			//numRoundsLock.unlock();
+			//System.out.println("decrement UNLOCKED");
+		//}
+	}
+	
+	//sendMessage from this node to targetNode through shortest path 
+	public void sendMessage(String targetNode) throws IOException{
+		//sendMsgLock.lock();
+		System.out.println(Thread.currentThread().getName()+" has lock");
+		Random rand = new Random();
+		int message = rand.nextInt();
+
+		Message msg = new Message(shortestPaths.get(targetNode), message);
+		//the first node in the shortest path is this current node
+		if(Protocol.DEBUG){
+			if(shortestPaths.get(targetNode).size()>1){
+				//System.out.println("sending to "+shortestPaths.get(targetNode).get(1));
+			}else{
+				System.out.println("ERROR: ");
+				System.out.println("target "+targetNode);
+			}
+		}
+		System.out.println("point 1");
+		TCPSender sender = establishedConnections.get(shortestPaths.get(targetNode).get(1)).getSender();
+		System.out.println("point 1.5");
+		sender.sendData(msg.getByte());
+		System.out.println("point 2");
+		this.sumMessagesSent+=message;
+		System.out.println("point 3");
+		if(Protocol.DEBUG){
+			//System.out.println("sent message: "+message);
+		}
+		//sendMsgLock.unlock();
+		System.out.println(Thread.currentThread().getName()+" released lock");
+	}
+	//when receive message
 	private void parseMessage(Message msg) throws IOException{
+		System.out.println("got message 1");
+		System.out.flush();
 		ArrayList<String> shortestPathIDs = msg.getShortestPathIDs();
+		System.out.println("got message 2");
+		System.out.flush();
 		if(shortestPathIDs.get(shortestPathIDs.size()-1).equals(this.getHostServerName())){
 			if(Protocol.DEBUG){
 			//	System.out.println("kept message with msg: " + msg.getMessage());
 			}
+			System.out.println("got message 3");
+		System.out.flush();
 			keepMessage(msg);
 		}
 		else{
+			System.out.println("got message 4");
+			System.out.flush();
 			relayMessage(msg);
 		}
+		System.out.println("got message 5");
+		System.out.flush();
 		
 	}
 	
@@ -519,8 +547,10 @@ public class MessagingNode implements Node {
 		//System.out.println("Kept message from " + msg.getShortestPathIDs().get(0));
 		//try{
 			//numRecLock.lock();
+		System.out.println("got message 3.1");
 			numMessagesRecieved.addAndGet(1);
-			//this.sumMessagesRecieved += msg.getMessage();
+			System.out.println("got message 3.2");
+			this.sumMessagesRecieved += msg.getMessage();
 		//}finally{
 			//numRecLock.unlock();
 		//}
@@ -528,22 +558,38 @@ public class MessagingNode implements Node {
 	}
 	
 	private void relayMessage(Message msg) throws IOException{
+		System.out.println("got message 4.1");
 		numMessagesRelayed++;
+		System.out.println("got message 4.2");
 		ArrayList<String> shortestPathIDs = msg.getShortestPathIDs();
 		int i;
 		for(i=0; i<shortestPathIDs.size()-1; ++i){
+			System.out.println("got message 4.3");
 			//System.out.println(shortestPathIDs.get(i)+" equal? " +this.getHostServerName());
 			if(shortestPathIDs.get(i).equals(this.getHostServerName())){
+				System.out.println("got message 4.4");
 				String destinationName = shortestPathIDs.get(i+1);
 				String destinationLocalName = serverNameToSocketName.get(destinationName);
 				establishedConnections.get(destinationLocalName).getSender().sendData(msg.getByte());
+				System.out.println("got message 4.5");
 				break;
 			}
 		}
+		System.out.println("got message 4.6");
 		if(i==shortestPathIDs.size()-1)
 			System.out.println("ERROR: OH MY GOODNESS I'M NOT ON THE LIST!!!!!");
 		
 	}
+	
+	public void sendCompletionNotification() throws IOException {
+		establishedConnections.get(registryPortServerName).getSender().sendData((new TaskComplete(this.getHostServerName()).getByte()));
+		System.out.println("send completion notification");
+		// TODO Auto-generated method stub
+		
+	}
+	
+
+	/***** REGISTER_RESQUEST (from peer) *****/
 	
 	private void registerPeerNode(RegisterRequest event, Socket socket){
 		serverNameToSocketName.put(event.getID(), Utilities.createKeyFromSocket(socket));

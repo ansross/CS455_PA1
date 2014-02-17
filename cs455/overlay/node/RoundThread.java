@@ -40,7 +40,7 @@ public class RoundThread extends Thread {
 			}
 			//sleep to allow time to receive 
 			try {
-				sleep(10);
+				sleep(500);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -49,11 +49,19 @@ public class RoundThread extends Thread {
 
 		}
 		try {
-			sleep(5);
+			sleep(50);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		sourceNode.decrementRoundRun();
+		try {
+			sourceNode.sendCompletionNotification();
+			System.out.println("Sent completion");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 }
