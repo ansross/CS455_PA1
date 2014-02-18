@@ -10,18 +10,20 @@ import java.io.IOException;
 
 public class RegisterRequest implements Event {
 	private int type = Protocol.REGISTER_REQUEST;
+	private String hostName;
 	private String IPAddress;
 	private int serverPortNum;
 	private String AssignedID;
 	
-	public RegisterRequest(String IPAddArg, int portNumArg, String idArg){
-		IPAddress = IPAddArg;
+	public RegisterRequest(String IPAddArg, String hostName, int portNumArg, String idArg){
+		this.hostName = hostName;
+		this.IPAddress = IPAddArg;
 		serverPortNum = portNumArg;
 		AssignedID = idArg;
 	}
 	
 	public void print(){
-		System.out.println("IPAdd: "+IPAddress + ", PortNum: "+serverPortNum +", id: "+AssignedID);
+		System.out.println("IPAdd: "+hostName + ", PortNum: "+serverPortNum +", id: "+AssignedID);
 	}
 	
 	@Override
@@ -32,6 +34,10 @@ public class RegisterRequest implements Event {
 	
 	public String getIPAddress(){
 		return IPAddress;
+	}
+	
+	public String getHostName(){
+		return hostName;
 	}
 	
 	public int getServerPortNum(){
@@ -53,12 +59,18 @@ public class RegisterRequest implements Event {
 		if(msgType != type){
 			System.out.println("ERROR: types do not match. Actual type: "+type+", passed type: "+msgType);
 		}
-		
 		//IPAddress
 		int IPAddressLength = din.readInt();
 		byte [] IPAddBytes = new byte[IPAddressLength];
 		din.readFully(IPAddBytes);
 		this.IPAddress = new String(IPAddBytes);
+		
+		
+		//host name
+		int hostNameLength = din.readInt();
+		byte [] hostNameBytes = new byte[hostNameLength];
+		din.readFully(hostNameBytes);
+		this.hostName = new String(hostNameBytes);
 	
 		//port number
 		serverPortNum = din.readInt();
@@ -86,6 +98,12 @@ public class RegisterRequest implements Event {
 		int elementLength = IPBytes.length;
 		dout.writeInt(elementLength);
 		dout.write(IPBytes);
+		
+		//IPAddress
+		byte[] hostBytes = hostName.getBytes();
+		int hostLength = hostBytes.length;
+		dout.writeInt(hostLength);
+		dout.write(hostBytes);
 		
 		//Port Number
 		dout.writeInt(serverPortNum);

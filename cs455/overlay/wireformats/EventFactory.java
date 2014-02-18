@@ -43,6 +43,9 @@ public class EventFactory {
 		case Protocol.DEREGISTER:
 			retEvent=new Deregister(marshalledBytes);
 			break;
+		case Protocol.DEREGISTER_RESPONSE:
+			retEvent = new DeregisterResponse(marshalledBytes);
+			break;
 		case Protocol.LINK_WEIGHTS:
 			retEvent = new LinkWeights(marshalledBytes);
 			break;

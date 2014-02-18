@@ -54,7 +54,7 @@ public class LinkWeights implements Event {
 		}
 		
 		this.numOfLinks = din.readLong();
-		System.out.println("Num of links: "+numOfLinks);
+		//System.out.println("Num of links: "+numOfLinks);
 		
 		for(int i=0; i<numOfLinks; ++i){
 			int linkInfoLength = din.readInt();

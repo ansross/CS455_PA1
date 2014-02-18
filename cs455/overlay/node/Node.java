@@ -9,7 +9,7 @@ public interface Node {
 	public void registerConnection(Connection conection);
 	public void deregisterConnection(Connection connection);
 	public void onEvent(Event event, Socket socket);
-	public void getCommandlineInput();
+	//public void getCommandlineInput();
 	public void setServerSocketPortNum(int localPort);
 	public String getHostServerName();
 }
